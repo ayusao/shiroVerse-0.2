@@ -1,10 +1,10 @@
 #include<iostream>
 #include<glad/glad.h>
+
 #include<GLFW/glfw3.h>
 
 #include "game.h"
 #include "resourceManager.h"
-
 const unsigned int windowx = 800;
 const unsigned int windowy = 600;
 
@@ -50,6 +50,7 @@ int main(int argc, char* argv[])
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
 	glViewport(0, 0, windowx, windowy);
+
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 

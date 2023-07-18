@@ -25,7 +25,9 @@ void Game::Init() {
     ResourceManager::GetShader("sprite").Use().SetInteger("image", 0);
     ResourceManager::GetShader("sprite").SetMatrix4("projection", projection);
     // set render-specific controls
-    Renderer = new SpriteRenderer(ResourceManager::GetShader("sprite"));
+    Shader theShader;
+    theShader= ResourceManager::GetShader("sprite");
+    Renderer = new SpriteRenderer(theShader);
     // load textures
     ResourceManager::LoadTexture("textures/background.jpg", false, "background");
     ResourceManager::LoadTexture("textures/awesomeface.png", true, "face");
@@ -73,7 +75,8 @@ void Game::Render() {
     if (this->State == GAME_ACTIVE)
     {
         // draw background
-        Renderer->DrawSprite(ResourceManager::GetTexture("background"), glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f);
+        Texture2D theTexture = ResourceManager::GetTexture("background");
+        Renderer->DrawSprite(theTexture, glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f);
         // draw level
         this->Levels[this->Level].Draw(*Renderer);
         // draw player
