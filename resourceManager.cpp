@@ -20,6 +20,7 @@ Shader ResourceManager::GetShader(std::string name) {
 	return Shaders[name];
 }
 
+
 Texture2D ResourceManager::LoadTexture(const char* file, bool alpha, std::string name) {
 	Textures[name] = loadTextureFromFile(file, alpha);
 	return Textures[name];

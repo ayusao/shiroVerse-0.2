@@ -1,6 +1,8 @@
 #include "shader.h"
 
 #include<iostream>
+#include<fstream>
+#include<sstream>
 
 Shader& Shader::Use() {
 	glUseProgram(this->ID);
@@ -82,26 +84,27 @@ void Shader::SetVector3f(const char* name, float x, float y, float z, bool useSh
 	glUniform3f(glGetUniformLocation(this->ID, name), x, y, z);
 }
 
-void Shader::SetVector3f(const char* name, const glm::vec3& value, bool useShader = false) {
+void Shader::SetVector3f(const char* name, const glm::vec3& value, bool useShader ) {
 	if (useShader)
 		this->Use();
 	glUniform3f(glGetUniformLocation(this->ID, name), value.x, value.y, value.z);
 }
-void Shader::SetVector4f(const char* name, float x, float y, float z, float w, bool useShader = false) {
+void Shader::SetVector4f(const char* name, float x, float y, float z, float w, bool useShader) {
 	if (useShader)
 		this->Use();
 	glUniform4f(glGetUniformLocation(this->ID, name), x,y,z,w);
 }
-void Shader::SetVector4f(const char* name, const glm::vec4& value, bool useShader = false) {
+void Shader::SetVector4f(const char* name, const glm::vec4& value, bool useShader) {
 	if (useShader)
 		this->Use();
 	glUniform4f(glGetUniformLocation(this->ID, name), value.x, value.y, value.z, value.w);
 }
-void Shader::SetMatrix4(const char* name, const glm::mat4& matrix, bool useShader = false) {
+void Shader::SetMatrix4(const char* name, const glm::mat4& matrix, bool useShader) {
 	if (useShader)
 		this->Use();
 	glUniformMatrix4fv(glGetUniformLocation(this->ID, name), 1, false, glm::value_ptr(matrix));
 }
+
 void Shader::checkCompileErrors(unsigned int object, std::string type) {
 	int success;
 	char infoLog[1024];
