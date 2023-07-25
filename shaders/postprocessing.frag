@@ -13,7 +13,7 @@ uniform bool shake;
 
 void main()
 {
-    color = vec4(0.0f);
+    color = vec4(0.0f,0.0f,0.0f,1.0f);
     vec3 sample[9];
     // sample from texture offsets if using convolution matrix
     if(chaos || shake)

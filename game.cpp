@@ -4,12 +4,16 @@
 #include "gameobject.h"
 #include "ballObject.h"
 #include "particlegenerator.h"
+#include "postprocessor.h"
 
 //game related state data
 SpriteRenderer* Renderer;
 GameObject* Player;
 BallObject* Ball;
 ParticleGenerator* Particles;
+PostProcessor* Effects;
+
+float ShakeTime = 0.0f;
 
 Game::Game(unsigned int width, unsigned int height) 
 	:State(GAME_ACTIVE), Keys(), Width(width), Height(height) {
@@ -21,25 +25,22 @@ Game::~Game() {
 	delete Player;
     delete Ball;
     delete Particles;
+    delete Effects;
 }
 
 void Game::Init() {
     // load shaders
     ResourceManager::LoadShader("shaders/sprite.vs", "shaders/sprite.frag", nullptr, "sprite");
     ResourceManager::LoadShader("shaders/particle.vs", "shaders/particle.frag", nullptr, "particle");
-    
+    ResourceManager::LoadShader("shaders/postprocessing.vs", "shaders/postprocessing.frag", nullptr, "postprocessing");
     // configure shaders
     glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(this->Width),
         static_cast<float>(this->Height), 0.0f, -1.0f, 1.0f);
     ResourceManager::GetShader("sprite").Use().SetInteger("image", 0);
     ResourceManager::GetShader("sprite").SetMatrix4("projection", projection);
     ResourceManager::GetShader("particle").Use().SetInteger("sprite", 0);
-   // ResourceManager::GetShader("particle").SetMatrix4("projection", projection);
-    ResourceManager::GetShader("particle").Use().SetMatrix4("projection", projection);
-    // set render-specific controls
-    Shader theShader= ResourceManager::GetShader("sprite");
-    Renderer = new SpriteRenderer(theShader);
-
+    ResourceManager::GetShader("particle").SetMatrix4("projection", projection);
+    //ResourceManager::GetShader("particle").Use().SetMatrix4("projection", projection);
     // load textures
     ResourceManager::LoadTexture("textures/background.jpg", false, "background");
     ResourceManager::LoadTexture("textures/awesomeface.png", true, "face");
@@ -48,12 +49,17 @@ void Game::Init() {
     ResourceManager::LoadTexture("textures/paddle.png", true, "paddle");
     ResourceManager::LoadTexture("textures/particle.png", true, "particle");
     /*  ResourceManager::LoadTexture("textures/passed.png", true, "respect++");*/
+        // set render-specific controls
+    Shader theShader = ResourceManager::GetShader("sprite");
+    Renderer = new SpriteRenderer(theShader);
 
     Particles = new ParticleGenerator(
         ResourceManager::GetShader("particle"),
         ResourceManager::GetTexture("particle"),
         700
     );
+
+    Effects = new PostProcessor(ResourceManager::GetShader("postprocessing"), this->Width, this->Height);
     // load levels
     GameLevel one; one.Load("levels/one.lvl", this->Width, this->Height / 2);
     GameLevel two; two.Load("levels/two.lvl", this->Width, this->Height / 2);
@@ -107,6 +113,13 @@ void Game::Update(float dt) {
     this->DoCollisions();
     //update particles
     Particles->Update(dt, *Ball, 2, glm::vec2(Ball->Radius / 2.0f));
+    //reduce shake time
+
+    if (ShakeTime > 0.0f) {
+        ShakeTime -= dt;
+        if (ShakeTime <= 0.0f)
+            Effects->Shake = false;
+    }
     //check loss condition
     if (Ball->Position.y >= this->Height) //did the ball reach bottom edge
     {
@@ -118,6 +131,7 @@ void Game::Update(float dt) {
 void Game::Render() {
     if (this->State == GAME_ACTIVE)
     {
+        Effects->BeginRender();
         // draw background
         Texture2D theTexture = ResourceManager::GetTexture("background");
         //Texture2D myTexture = ResourceManager::GetTexture("respect++");
@@ -131,6 +145,10 @@ void Game::Render() {
         Particles->Draw();
         //draw ball
         Ball->Draw(*Renderer);
+        //end rendering to postprocessig framebuffer
+        Effects->EndRender();
+        //render postprocessing quad
+        Effects->Render(glfwGetTime());
     }
 }
 
@@ -165,6 +183,12 @@ void Game::DoCollisions() {
                 //destroyed block if not solid
                 if (!box.IsSolid)
                     box.Destroyed = true;
+                else {
+                    //if the ball hits the solid block then we enable the shake effect
+                    ShakeTime = 0.05f;
+                    Effects->Shake = true;
+                }
+
                 //collision resolution
                 Direction dir = std::get<1>(collision);
                 glm::vec2 diff_vector = std::get<2>(collision);
