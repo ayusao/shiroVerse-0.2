@@ -7,4 +7,4 @@ Note that processed coordinates in OpenGL are between -1 and 1 so we effectively
 3. projection matrix xonverts all view-space coorfinates to clip-space (and then to normalized device) coordinates
 	the game is entirely in 2d so an orthographic projection matrix is used
 
-4. 
+4. AABB stands for axis-aligned bounding box

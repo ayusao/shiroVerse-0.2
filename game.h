@@ -14,11 +14,30 @@ enum GameState {
 	GAME_WIN
 };
 
+//represents the four possible (collision) directions
+enum Direction {
+	UP,
+	RIGHT,
+	DOWN,
+	LEFT
+};
+
+//a collision typedef that represents collision data
+typedef std::tuple<bool, Direction, glm::vec2> Collision; //<collision?, what direction?, difference vector center - closest point>
+
+//the player paddle
 const glm::vec2 PLAYER_SIZE(100.0f, 20.0f);
 
+//paddle initial velocity
 const float PLAYER_VELOCITY(500.0f);
 
-//ease access to each of the components and manafeability
+//radius of the ball object
+const float BALL_RADIUS = 12.5f;
+
+//initial ball velocity
+const glm::vec2 INITIAL_BALL_VELOCITY(100.0f, -350.0f);
+
+//easy access to each of the components and manafeability
 class Game {
 public:
 	//game state
@@ -38,6 +57,11 @@ public:
 	void ProcessInput(float dt);
 	void Update(float dt);
 	void Render();
+	void DoCollisions();
+
+	//reset
+	void ResetLevel();
+	void ResetPlayer();
 };
 
 #endif

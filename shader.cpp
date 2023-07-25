@@ -1,8 +1,6 @@
 #include "shader.h"
 
 #include<iostream>
-//#include<fstream>
-//#include<sstream>
 
 Shader& Shader::Use() {
 	glUseProgram(this->ID);
