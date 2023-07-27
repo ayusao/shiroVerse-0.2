@@ -100,7 +100,10 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			if (action == GLFW_PRESS)
 				alienVerse.Keys[key] = true;
 			else if (action == GLFW_RELEASE)
+			{
 				alienVerse.Keys[key] = false;
+				alienVerse.KeysProcessed[key] = false;
+			}
 		}
 
 }

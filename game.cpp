@@ -7,6 +7,8 @@
 #include "ballObject.h"
 #include "particlegenerator.h"
 #include "postprocessor.h"
+#include <irr/irrKlang.h>
+using namespace irrklang;
 
 //game related state data
 SpriteRenderer* Renderer;
@@ -14,11 +16,11 @@ GameObject* Player;
 BallObject* Ball;
 ParticleGenerator* Particles;
 PostProcessor* Effects;
-
+ISoundEngine* SoundEngine = createIrrKlangDevice();
 float ShakeTime = 0.0f;
 
 Game::Game(unsigned int width, unsigned int height) 
-	:State(GAME_ACTIVE), Keys(), Width(width), Height(height) {
+	:State(GAME_MENU), Keys(), Width(width), Height(height),Lives(3) {
 
 }
 
@@ -28,6 +30,7 @@ Game::~Game() {
     delete Ball;
     delete Particles;
     delete Effects;
+    SoundEngine->drop();
 }
 
 void Game::Init() {
@@ -84,34 +87,67 @@ void Game::Init() {
 
     glm::vec2 ballPos = playerPos + glm::vec2(PLAYER_SIZE.x / 2.0f - BALL_RADIUS, -BALL_RADIUS * 2.0f);
     Ball = new BallObject(ballPos, BALL_RADIUS, INITIAL_BALL_VELOCITY, ResourceManager::GetTexture("face"));
+
+    //audio
+    SoundEngine->play2D("audio/breakout.mp3", true);
 }
 
 void Game::ProcessInput(float dt) {
-    if (this->State == GAME_ACTIVE)
-    {
-        float velocity = PLAYER_VELOCITY * dt;
-        // move playerboard
-        if (this->Keys[GLFW_KEY_A])
+    if (this->State == GAME_MENU) {
+        if (this->Keys[GLFW_KEY_ENTER] && !this->KeysProcessed[GLFW_KEY_ENTER])
         {
-            if (Player->Position.x >= 0.0f)
-            {
-                Player->Position.x -= velocity;
-                if (Ball->Stuck)
-                    Ball->Position.x -= velocity;
-            }
+            this->State = GAME_ACTIVE;
+            this->KeysProcessed[GLFW_KEY_ENTER] = true;
         }
-        if (this->Keys[GLFW_KEY_D])
+        if (this->Keys[GLFW_KEY_W] && !this->KeysProcessed[GLFW_KEY_W])
         {
-            if (Player->Position.x <= this->Width - Player->Size.x)
-            {
-                Player->Position.x += velocity;
-                if (Ball->Stuck)
-                    Ball->Position.x += velocity;
-            }
+            this->Level = (this->Level + 1) % 4;
+            this->KeysProcessed[GLFW_KEY_W] = true;
         }
-        if (this->Keys[GLFW_KEY_SPACE])
-            Ball->Stuck = false;
+        if (this->Keys[GLFW_KEY_S] && !this->KeysProcessed[GLFW_KEY_S])
+        {
+            if (this->Level > 0)
+                --this->Level;
+            else
+                this->Level = 3;
+
+            this->KeysProcessed[GLFW_KEY_S] = true;
+        }
     }
+    if (this->State == GAME_WIN) {
+        if (this->Keys[GLFW_KEY_ENTER]) {
+            this->KeysProcessed[GLFW_KEY_ENTER] = true;
+            Effects->Chaos = false;
+            this->State = GAME_MENU;
+        }
+
+    }
+        if (this->State == GAME_ACTIVE)
+        {
+            float velocity = PLAYER_VELOCITY * dt;
+            // move playerboard
+            if (this->Keys[GLFW_KEY_A])
+            {
+                if (Player->Position.x >= 0.0f)
+                {
+                    Player->Position.x -= velocity;
+                    if (Ball->Stuck)
+                        Ball->Position.x -= velocity;
+                }
+            }
+            if (this->Keys[GLFW_KEY_D])
+            {
+                if (Player->Position.x <= this->Width - Player->Size.x)
+                {
+                    Player->Position.x += velocity;
+                    if (Ball->Stuck)
+                        Ball->Position.x += velocity;
+                }
+            }
+            if (this->Keys[GLFW_KEY_SPACE])
+                Ball->Stuck = false;
+        }
+    
 }
 
 void Game::Update(float dt) {
@@ -133,13 +169,26 @@ void Game::Update(float dt) {
     //check loss condition
     if (Ball->Position.y >= this->Height) //did the ball reach bottom edge
     {
+        --this->Lives;
+        if (this->Lives == 0) {
+            this->ResetLevel();
+            this->ResetPlayer();
+        }
+        this->ResetPlayer();
+    }
+
+    //win check
+    if (this->State == GAME_ACTIVE && this->Levels[this->Level].IsCompleted())
+    {
         this->ResetLevel();
         this->ResetPlayer();
+        Effects->Chaos = true;
+        this->State = GAME_WIN;
     }
 }
 
 void Game::Render() {
-    if (this->State == GAME_ACTIVE)
+    if (this->State == GAME_ACTIVE|| this->State == GAME_MENU || this->State == GAME_WIN)
     {
         Effects->BeginRender();
         // draw background
@@ -164,6 +213,10 @@ void Game::Render() {
         //render postprocessing quad
         Effects->Render(glfwGetTime());
     }
+
+    ///
+    /// the text code
+    ///
 }
 
 void Game::ResetLevel() {
@@ -175,6 +228,8 @@ void Game::ResetLevel() {
         this->Levels[2].Load("levels/three.lvl", this->Width, this->Height / 2);
     else if (this->Level == 3)
         this->Levels[3].Load("levels/four.lvl", this->Width, this->Height / 2);
+
+    this->Lives = 3;
 }
 
 void Game::ResetPlayer() {
@@ -327,11 +382,13 @@ void Game::DoCollisions() {
                 if (!box.IsSolid) {
                     box.Destroyed = true;
                     this->SpawnPowerUps(box);
+                    SoundEngine->play2D("audio/bleep.mp3", false);
                 }
                 else {
                     //if the ball hits the solid block then we enable the shake effect
                     ShakeTime = 0.05f;
                     Effects->Shake = true;
+                    SoundEngine->play2D("audio/solid.wav", false);
                 }
 
                 //collision resolution
@@ -378,6 +435,7 @@ void Game::DoCollisions() {
                 ActivatePowerUp(powerUp);
                 powerUp.Destroyed = true;
                 powerUp.Activated = true;
+                SoundEngine->play2D("audio/powerup.wav", false);
             }
         }
     }
@@ -399,6 +457,7 @@ void Game::DoCollisions() {
        
         // if Sticky powerup is activated, also stick ball to paddle once new velocity vectors were calculated
         Ball->Stuck = Ball->Sticky;
+        SoundEngine->play2D("audio/bleep.wav", false);
     }
 }
 
