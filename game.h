@@ -35,7 +35,7 @@ const glm::vec2 PLAYER_SIZE(100.0f, 20.0f);
 const float PLAYER_VELOCITY(500.0f);
 
 //radius of the ball object
-const float BALL_RADIUS = 12.5f;
+const float BALL_RADIUS = 18.0f;
 
 //initial ball velocity
 const glm::vec2 INITIAL_BALL_VELOCITY(100.0f, -350.0f);

@@ -4,7 +4,7 @@
 #include "spriterenderer.h"
 #include "resourceManager.h"
 #include "gameobject.h"
-#include "ballObject.h"
+#include "playerObject.h"
 #include "particlegenerator.h"
 #include "postprocessor.h"
 #include <irr/irrKlang.h>
@@ -12,8 +12,7 @@ using namespace irrklang;
 
 //game related state data
 SpriteRenderer* Renderer;
-GameObject* Player;
-BallObject* Ball;
+PlayerObject* shiro;  //the dog in spaceship
 ParticleGenerator* Particles;
 PostProcessor* Effects;
 ISoundEngine* SoundEngine = createIrrKlangDevice();
@@ -26,8 +25,7 @@ Game::Game(unsigned int width, unsigned int height)
 
 Game::~Game() {
 	delete Renderer;
-	delete Player;
-    delete Ball;
+    delete shiro;
     delete Particles;
     delete Effects;
     SoundEngine->drop();
@@ -45,21 +43,13 @@ void Game::Init() {
     ResourceManager::GetShader("sprite").SetMatrix4("projection", projection);
     ResourceManager::GetShader("particle").Use().SetInteger("sprite", 0);
     ResourceManager::GetShader("particle").SetMatrix4("projection", projection);
-    //ResourceManager::GetShader("particle").Use().SetMatrix4("projection", projection);
+
     // load textures
-    ResourceManager::LoadTexture("textures/background.jpg", false, "background");
-    ResourceManager::LoadTexture("textures/awesomeface.png", true, "face");
+    ResourceManager::LoadTexture("textures/spacebg.jpg", false, "background");
+    ResourceManager::LoadTexture("textures/spaceship.png", true, "face");
     ResourceManager::LoadTexture("textures/block.png", false, "block");
-    ResourceManager::LoadTexture("textures/block_solid.png", false, "block_solid");
-    ResourceManager::LoadTexture("textures/paddle.png", true, "paddle");
+    ResourceManager::LoadTexture("textures/astroid.png", true, "block_solid");
     ResourceManager::LoadTexture("textures/particle.png", true, "particle");
-    ResourceManager::LoadTexture("textures/powerup_speed.png", true, "powerup_speed");
-    ResourceManager::LoadTexture("textures/powerup_sticky.png", true, "powerup_sticky");
-    ResourceManager::LoadTexture("textures/powerup_increase.png", true, "powerup_increase");
-    ResourceManager::LoadTexture("textures/powerup_confuse.png", true, "powerup_confuse");
-    ResourceManager::LoadTexture("textures/powerup_chaos.png", true, "powerup_chaos");
-    ResourceManager::LoadTexture("textures/powerup_passthrough.png", true, "powerup_passthrough");
-    /*  ResourceManager::LoadTexture("textures/passed.png", true, "respect++");*/
         // set render-specific controls
     Shader theShader = ResourceManager::GetShader("sprite");
     Renderer = new SpriteRenderer(theShader);
@@ -72,21 +62,19 @@ void Game::Init() {
 
     Effects = new PostProcessor(ResourceManager::GetShader("postprocessing"), this->Width, this->Height);
     // load levels
-    GameLevel one; one.Load("levels/one.lvl", this->Width, this->Height / 2);
-    GameLevel two; two.Load("levels/two.lvl", this->Width, this->Height / 2);
-    GameLevel three; three.Load("levels/three.lvl", this->Width, this->Height / 2);
-    GameLevel four; four.Load("levels/four.lvl", this->Width, this->Height / 2);
+    GameLevel one; one.Load("levels/one.lvl", this->Width, this->Height*0.8);
+    GameLevel two; two.Load("levels/two.lvl", this->Width, this->Height*0.8);
+    GameLevel three; three.Load("levels/three.lvl", this->Width, this->Height*0.8);
+    GameLevel four; four.Load("levels/four.lvl", this->Width, this->Height*0.8);
     this->Levels.push_back(one);
     this->Levels.push_back(two);
     this->Levels.push_back(three);
     this->Levels.push_back(four);
     this->Level = 0;
-    // configure game objects
-    glm::vec2 playerPos = glm::vec2(this->Width / 2.0f - PLAYER_SIZE.x / 2.0f, this->Height - PLAYER_SIZE.y);
-    Player = new GameObject(playerPos, PLAYER_SIZE, ResourceManager::GetTexture("paddle"));
 
-    glm::vec2 ballPos = playerPos + glm::vec2(PLAYER_SIZE.x / 2.0f - BALL_RADIUS, -BALL_RADIUS * 2.0f);
-    Ball = new BallObject(ballPos, BALL_RADIUS, INITIAL_BALL_VELOCITY, ResourceManager::GetTexture("face"));
+
+    glm::vec2 shiroPos = glm::vec2(this->Width / 2.0f - BALL_RADIUS, this->Height-BALL_RADIUS*2.0f);
+    shiro = new PlayerObject(shiroPos, BALL_RADIUS, INITIAL_BALL_VELOCITY, ResourceManager::GetTexture("face"));
 
     //audio
     SoundEngine->play2D("audio/breakout.mp3", true);
@@ -126,39 +114,37 @@ void Game::ProcessInput(float dt) {
         {
             float velocity = PLAYER_VELOCITY * dt;
             // move playerboard
-            if (this->Keys[GLFW_KEY_A])
+            if (this->Keys[GLFW_KEY_A] || this->Keys[GLFW_KEY_LEFT])
             {
-                if (Player->Position.x >= 0.0f)
-                {
-                    Player->Position.x -= velocity;
-                    if (Ball->Stuck)
-                        Ball->Position.x -= velocity;
-                }
+                shiro->Position.x -= 1;
             }
-            if (this->Keys[GLFW_KEY_D])
+            if (this->Keys[GLFW_KEY_D] || this->Keys[GLFW_KEY_RIGHT])
             {
-                if (Player->Position.x <= this->Width - Player->Size.x)
-                {
-                    Player->Position.x += velocity;
-                    if (Ball->Stuck)
-                        Ball->Position.x += velocity;
-                }
+                shiro->Position.x += 1;
             }
+
             if (this->Keys[GLFW_KEY_SPACE])
-                Ball->Stuck = false;
+                shiro->Stuck = false;
+
+            if (this->Keys[GLFW_KEY_UP])
+                shiro->Position.y -= 1;
+            if (this->Keys[GLFW_KEY_DOWN])
+                shiro->Position.y += 1;
         }
     
 }
 
 void Game::Update(float dt) {
     //update objects
-    Ball->Move(dt, this->Width);
+    
     //checks for collisions
     this->DoCollisions();
     //update particles
-    Particles->Update(dt, *Ball, 2, glm::vec2(Ball->Radius / 2.0f));
+    Particles->Update(dt, *shiro, 2, glm::vec2(shiro->Radius / 2.0f));
+
     //update powerups
-    this->UpdatePowerUps(dt);
+   // this->UpdatePowerUps(dt);
+  
     //reduce shake time
 
     if (ShakeTime > 0.0f) {
@@ -167,7 +153,7 @@ void Game::Update(float dt) {
             Effects->Shake = false;
     }
     //check loss condition
-    if (Ball->Position.y >= this->Height) //did the ball reach bottom edge
+    if (shiro->Position.y >= this->Height) //did the ball reach bottom edge
     {
         --this->Lives;
         if (this->Lives == 0) {
@@ -193,21 +179,19 @@ void Game::Render() {
         Effects->BeginRender();
         // draw background
         Texture2D theTexture = ResourceManager::GetTexture("background");
-        //Texture2D myTexture = ResourceManager::GetTexture("respect++");
-        //Renderer->DrawSprite(theTexture, glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f);
         Renderer->DrawSprite(theTexture, glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f);
         // draw level
         this->Levels[this->Level].Draw(*Renderer);
-        // draw player
-        Player->Draw(*Renderer);
+   
         // draw powerups
-        for (PowerUp& powerUp : this->PowerUps)
-            if (!powerUp.Destroyed)
-                powerUp.Draw(*Renderer);
+        //for (PowerUp& powerUp : this->PowerUps)
+        //    if (!powerUp.Destroyed)
+        //        powerUp.Draw(*Renderer);
+        
         //draw particles
         Particles->Draw();
         //draw ball
-        Ball->Draw(*Renderer);
+        shiro->Draw(*Renderer);
         //end rendering to postprocessig framebuffer
         Effects->EndRender();
         //render postprocessing quad
@@ -221,27 +205,26 @@ void Game::Render() {
 
 void Game::ResetLevel() {
     if (this->Level == 0)
-        this->Levels[0].Load("levels/one.lvl", this->Width, this->Height / 2);
+        this->Levels[0].Load("levels/one.lvl", this->Width, this->Height *0.8);
     else if (this->Level == 1)
-        this->Levels[1].Load("levels/two.lvl", this->Width, this->Height / 2);
+        this->Levels[1].Load("levels/two.lvl", this->Width, this->Height *0.8);
     else if (this->Level == 2)
-        this->Levels[2].Load("levels/three.lvl", this->Width, this->Height / 2);
+        this->Levels[2].Load("levels/three.lvl", this->Width, this->Height *0.8);
     else if (this->Level == 3)
-        this->Levels[3].Load("levels/four.lvl", this->Width, this->Height / 2);
+        this->Levels[3].Load("levels/four.lvl", this->Width, this->Height * 0.8);
 
     this->Lives = 3;
 }
 
 void Game::ResetPlayer() {
     //reset player/ball states
-    Player->Size = PLAYER_SIZE;
-    Player->Position = glm::vec2(this->Width / 2.0f - PLAYER_SIZE.x / 2.0f, this->Height - PLAYER_SIZE.y);
-    Ball->Reset(Player->Position + glm::vec2(PLAYER_SIZE.x / 2.0f - BALL_RADIUS, -(BALL_RADIUS * 2.0f)), INITIAL_BALL_VELOCITY);
+
+    shiro->Reset(glm::vec2(this->Width / 2.0f - BALL_RADIUS, this->Height - BALL_RADIUS * 2), INITIAL_BALL_VELOCITY);
     // also disable all active powerups
     Effects->Chaos = Effects->Confuse = false;
-    Ball->PassThrough = Ball->Sticky = false;
-    Player->Color = glm::vec3(1.0f);
-    Ball->Color = glm::vec3(1.0f);
+    shiro->PassThrough = shiro->Sticky = false;
+    //Player->Color = glm::vec3(1.0f);
+    shiro->Color = glm::vec3(1.0f);
 }
 
 // powerups
@@ -265,16 +248,16 @@ void Game::UpdatePowerUps(float dt)
                 {
                     if (!IsOtherPowerUpActive(this->PowerUps, "sticky"))
                     {	// only reset if no other PowerUp of type sticky is active
-                        Ball->Sticky = false;
-                        Player->Color = glm::vec3(1.0f);
+                        shiro->Sticky = false;
+                        //Player->Color = glm::vec3(1.0f);
                     }
                 }
                 else if (powerUp.Type == "pass-through")
                 {
                     if (!IsOtherPowerUpActive(this->PowerUps, "pass-through"))
                     {	// only reset if no other PowerUp of type pass-through is active
-                        Ball->PassThrough = false;
-                        Ball->Color = glm::vec3(1.0f);
+                        shiro->PassThrough = false;
+                        shiro->Color = glm::vec3(1.0f);
                     }
                 }
                 else if (powerUp.Type == "confuse")
@@ -326,21 +309,21 @@ void ActivatePowerUp(PowerUp& powerUp)
 {
     if (powerUp.Type == "speed")
     {
-        Ball->Velocity *= 1.2;
+        shiro->Velocity *= 1.2;
     }
     else if (powerUp.Type == "sticky")
     {
-        Ball->Sticky = true;
-        Player->Color = glm::vec3(1.0f, 0.5f, 1.0f);
+        shiro->Sticky = true;
+        //Player->Color = glm::vec3(1.0f, 0.5f, 1.0f);
     }
     else if (powerUp.Type == "pass-through")
     {
-        Ball->PassThrough = true;
-        Ball->Color = glm::vec3(1.0f, 0.5f, 0.5f);
+        shiro->PassThrough = true;
+        shiro->Color = glm::vec3(1.0f, 0.5f, 0.5f);
     }
     else if (powerUp.Type == "pad-size-increase")
     {
-        Player->Size.x += 50;
+       // Player->Size.x += 50;
     }
     else if (powerUp.Type == "confuse")
     {
@@ -370,13 +353,13 @@ bool IsOtherPowerUpActive(std::vector<PowerUp>& powerUps, std::string type)
 
 //collision detection
 bool CheckCollision(GameObject& one, GameObject& two);
-Collision CheckCollision(BallObject& one, GameObject& two);
+Collision CheckCollision(PlayerObject& one, GameObject& two);
 Direction VectorDirection(glm::vec2 closest);
 
 void Game::DoCollisions() {
     for (GameObject& box : this->Levels[this->Level].Bricks) {
         if (!box.Destroyed) {
-            Collision collision = CheckCollision(*Ball, box);
+            Collision collision = CheckCollision(*shiro, box);
             if (std::get<0>(collision)) {//if collision is true
                 //destroyed block if not solid
                 if (!box.IsSolid) {
@@ -394,27 +377,27 @@ void Game::DoCollisions() {
                 //collision resolution
                 Direction dir = std::get<1>(collision);
                 glm::vec2 diff_vector = std::get<2>(collision);
-                if (!(Ball->PassThrough && !box.IsSolid)) {
+                if (!(shiro->PassThrough && !box.IsSolid)) {
                     if (dir == LEFT || dir == RIGHT) {//horizontal collision
-                        Ball->Velocity.x = -Ball->Velocity.x; //reverse horizontal velocity
+                        shiro->Velocity.x = -shiro->Velocity.x; //reverse horizontal velocity
 
                         //relocate
-                        float penetration = Ball->Radius - std::abs(diff_vector.x);
+                        float penetration = shiro->Radius - std::abs(diff_vector.x);
                         if (dir == LEFT)
-                            Ball->Position.x += penetration; //move ball to right
+                            shiro->Position.x += penetration; //move ball to right
                         else
-                            Ball->Position.x -= penetration;    //move ball to left
+                            shiro->Position.x -= penetration;    //move ball to left
                     }
                     else //vertical collision
                     {
-                        Ball->Velocity.y = -Ball->Velocity.y; //reverse vertical velocity
+                        shiro->Velocity.y = -shiro->Velocity.y; //reverse vertical velocity
 
                         //relocate
-                        float penetration = Ball->Radius - std::abs(diff_vector.y);
+                        float penetration = shiro->Radius - std::abs(diff_vector.y);
                         if (dir == UP)
-                            Ball->Position.y -= penetration; //move ball back up
+                            shiro->Position.y -= penetration; //move ball back up
                         else
-                            Ball->Position.y += penetration; //move ball back down
+                            shiro->Position.y += penetration; //move ball back down
                     }
                 }
             }
@@ -430,35 +413,35 @@ void Game::DoCollisions() {
             if (powerUp.Position.y >= this->Height)
                 powerUp.Destroyed = true;
 
-            if (CheckCollision(*Player, powerUp))
-            {	// collided with player, now activate powerup
-                ActivatePowerUp(powerUp);
-                powerUp.Destroyed = true;
-                powerUp.Activated = true;
-                SoundEngine->play2D("audio/powerup.wav", false);
-            }
+            //if (CheckCollision(*Player, powerUp))
+            //{	// collided with player, now activate powerup
+            //    ActivatePowerUp(powerUp);
+            //    powerUp.Destroyed = true;
+            //    powerUp.Activated = true;
+            //    SoundEngine->play2D("audio/powerup.wav", false);
+            //}
         }
     }
 
     //check collitions for player pad (unless stuck)
-    Collision result = CheckCollision(*Ball, *Player);
-    if (!Ball->Stuck && std::get<0>(result)) {
-        //check where it hit the board, and change velocity based on where it hit the board
-        float centerBoard = Player->Position.x + Player->Size.x / 2.0f;
-        float distance = (Ball->Position.x + Ball->Radius) - centerBoard;
-        float percentage = distance / (Player->Size.x / 2.0f);
+    //Collision result = CheckCollision(*Ball, *Player);
+    //if (!Ball->Stuck && std::get<0>(result)) {
+    //    //check where it hit the board, and change velocity based on where it hit the board
+    //    float centerBoard = Player->Position.x + Player->Size.x / 2.0f;
+    //    float distance = (Ball->Position.x + Ball->Radius) - centerBoard;
+    //    float percentage = distance / (Player->Size.x / 2.0f);
 
-        //then move accordingly
-        float strength = 2.0f;
-        glm::vec2 oldVelocity = Ball->Velocity;
-        Ball->Velocity.x = INITIAL_BALL_VELOCITY.x * percentage * strength;
-        Ball->Velocity = glm::normalize(Ball->Velocity) * glm::length(oldVelocity);// keep speed consistent over both axes (multiply by length of old velocity, so total strength is not changed)
-        Ball->Velocity.y = -1.0f * abs(Ball->Velocity.y);
-       
-        // if Sticky powerup is activated, also stick ball to paddle once new velocity vectors were calculated
-        Ball->Stuck = Ball->Sticky;
-        SoundEngine->play2D("audio/bleep.wav", false);
-    }
+    //    //then move accordingly
+    //    float strength = 2.0f;
+    //    glm::vec2 oldVelocity = Ball->Velocity;
+    //    Ball->Velocity.x = INITIAL_BALL_VELOCITY.x * percentage * strength;
+    //    Ball->Velocity = glm::normalize(Ball->Velocity) * glm::length(oldVelocity);// keep speed consistent over both axes (multiply by length of old velocity, so total strength is not changed)
+    //    Ball->Velocity.y = -1.0f * abs(Ball->Velocity.y);
+    //   
+    //    // if Sticky powerup is activated, also stick ball to paddle once new velocity vectors were calculated
+    //    Ball->Stuck = Ball->Sticky;
+    //    SoundEngine->play2D("audio/bleep.wav", false);
+    //}
 }
 
 bool CheckCollision(GameObject& one, GameObject& two) { //AABB-AABB collision
@@ -472,7 +455,7 @@ bool CheckCollision(GameObject& one, GameObject& two) { //AABB-AABB collision
     return collisionX && collisionY;
 }
 
-Collision CheckCollision(BallObject& one, GameObject& two) {//AABB - Circle collision
+Collision CheckCollision(PlayerObject& one, GameObject& two) {//AABB - Circle collision
     //get center point circle first
     glm::vec2 center(one.Position + one.Radius);
     //calculate AABB info(center, half-extents)
