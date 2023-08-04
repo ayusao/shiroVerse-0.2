@@ -47,9 +47,10 @@ void Game::Init() {
 
     // load textures
     ResourceManager::LoadTexture("textures/spacebg.jpg", false, "background");
+    ResourceManager::LoadTexture("textures/ocean.jpg", false, "ocean");
     ResourceManager::LoadTexture("textures/spaceship.png", true, "face");
     ResourceManager::LoadTexture("textures/block.png", false, "block");
-    ResourceManager::LoadTexture("textures/astroid.png", true, "block_solid");
+    ResourceManager::LoadTexture("textures/astroids.png", true, "block_solid");
     ResourceManager::LoadTexture("textures/particle.png", true, "particle");
     ResourceManager::LoadTexture("textures/passed.png", true, "passed");
         // set render-specific controls
@@ -140,10 +141,16 @@ void Game::ProcessInput(float dt) {
 void Game::Update(float dt) {
     //update objects
     
-    //checks for collisions
-    this->DoCollisions();
-    //update particles
-    Particles->Update(dt, *shiro, 2, glm::vec2(shiro->Radius / 2.0f));
+    if (this->Level == 2) {
+
+    }
+    else {
+        //checks for collisions
+        this->DoCollisions();
+        //update particles
+        Particles->Update(dt, *shiro, 2, glm::vec2(shiro->Radius / 2.0f));
+    }
+    
 
     //update powerups
    // this->UpdatePowerUps(dt);
@@ -182,8 +189,20 @@ void Game::Render() {
     {
         Effects->BeginRender();
         // draw background
-        Texture2D theTexture = ResourceManager::GetTexture("background");
-        Renderer->DrawSprite(theTexture, glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f);
+
+        if (this->Level == 2) {
+            Texture2D theTexture = ResourceManager::GetTexture("ocean");
+            Renderer->DrawSprite(theTexture, glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f);
+        }
+        else {
+            Texture2D theTexture = ResourceManager::GetTexture("background");
+            Renderer->DrawSprite(theTexture, glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f);
+
+            //draw particles
+            Particles->Draw();
+            //draw ball
+            shiro->Draw(*Renderer);
+        }
         // draw level
         this->Levels[this->Level].Draw(*Renderer);
    
@@ -191,11 +210,7 @@ void Game::Render() {
         //for (PowerUp& powerUp : this->PowerUps)
         //    if (!powerUp.Destroyed)
         //        powerUp.Draw(*Renderer);
-        
-        //draw particles
-        Particles->Draw();
-        //draw ball
-        shiro->Draw(*Renderer);
+
         //end rendering to postprocessig framebuffer
         Effects->EndRender();
         //render postprocessing quad
@@ -375,12 +390,12 @@ void Game::DoCollisions() {
                 //destroyed block if not solid
                 if (!box.IsSolid) {
                     box.Destroyed = true;
-                    this->SpawnPowerUps(box);
+                    //this->SpawnPowerUps(box);
                     SoundEngine->play2D("audio/bleep.mp3", false);
                 }
                 else {
                     //if the ball hits the solid block then we enable the shake effect
-                    ShakeTime = 0.05f;
+                   ShakeTime = 0.02f;
                     Effects->Shake = true;
                     SoundEngine->play2D("audio/solid.wav", false);
                 }
