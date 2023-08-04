@@ -18,6 +18,7 @@ PostProcessor* Effects;
 ISoundEngine* SoundEngine = createIrrKlangDevice();
 float ShakeTime = 0.0f;
 
+
 Game::Game(unsigned int width, unsigned int height) 
 	:State(GAME_MENU), Keys(), Width(width), Height(height),Lives(3) {
 
@@ -50,6 +51,7 @@ void Game::Init() {
     ResourceManager::LoadTexture("textures/block.png", false, "block");
     ResourceManager::LoadTexture("textures/astroid.png", true, "block_solid");
     ResourceManager::LoadTexture("textures/particle.png", true, "particle");
+    ResourceManager::LoadTexture("textures/passed.png", true, "passed");
         // set render-specific controls
     Shader theShader = ResourceManager::GetShader("sprite");
     Renderer = new SpriteRenderer(theShader);
@@ -71,6 +73,7 @@ void Game::Init() {
     this->Levels.push_back(three);
     this->Levels.push_back(four);
     this->Level = 0;
+
 
 
     glm::vec2 shiroPos = glm::vec2(this->Width / 2.0f - BALL_RADIUS, this->Height-BALL_RADIUS*2.0f);
@@ -170,6 +173,7 @@ void Game::Update(float dt) {
         this->ResetPlayer();
         Effects->Chaos = true;
         this->State = GAME_WIN;
+
     }
 }
 
@@ -196,6 +200,13 @@ void Game::Render() {
         Effects->EndRender();
         //render postprocessing quad
         Effects->Render(glfwGetTime());
+
+        if (this->State == GAME_WIN) {
+
+            Texture2D pTexture = ResourceManager::GetTexture("passed");
+            Renderer->DrawSprite(pTexture, glm::vec2(this->Width/4.0f, this->Height/4.0f), glm::vec2(this->Width / 2.0f, this->Height / 2.0f), 0.0f);
+        }
+
     }
 
     ///
