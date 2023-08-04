@@ -13,6 +13,7 @@ using namespace irrklang;
 //game related state data
 SpriteRenderer* Renderer;
 PlayerObject* shiro;  //the dog in spaceship
+PlayerObject* swimShiro;
 ParticleGenerator* Particles;
 PostProcessor* Effects;
 ISoundEngine* SoundEngine = createIrrKlangDevice();
@@ -29,6 +30,7 @@ Game::~Game() {
     delete shiro;
     delete Particles;
     delete Effects;
+    delete swimShiro;
     SoundEngine->drop();
 }
 
@@ -53,6 +55,7 @@ void Game::Init() {
     ResourceManager::LoadTexture("textures/astroids.png", true, "block_solid");
     ResourceManager::LoadTexture("textures/particle.png", true, "particle");
     ResourceManager::LoadTexture("textures/passed.png", true, "passed");
+    ResourceManager::LoadTexture("textures/swim.png", true, "swim");
         // set render-specific controls
     Shader theShader = ResourceManager::GetShader("sprite");
     Renderer = new SpriteRenderer(theShader);
@@ -79,7 +82,7 @@ void Game::Init() {
 
     glm::vec2 shiroPos = glm::vec2(this->Width / 2.0f - BALL_RADIUS, this->Height-BALL_RADIUS*2.0f);
     shiro = new PlayerObject(shiroPos, BALL_RADIUS, INITIAL_BALL_VELOCITY, ResourceManager::GetTexture("face"));
-
+    swimShiro = new PlayerObject(shiroPos, BALL_RADIUS, INITIAL_BALL_VELOCITY, ResourceManager::GetTexture("swim"));
     //audio
     SoundEngine->play2D("audio/breakout.mp3", true);
 }
@@ -121,19 +124,25 @@ void Game::ProcessInput(float dt) {
             if (this->Keys[GLFW_KEY_A] || this->Keys[GLFW_KEY_LEFT])
             {
                 shiro->Position.x -= 1;
+                swimShiro->Position.x -= 1;
             }
             if (this->Keys[GLFW_KEY_D] || this->Keys[GLFW_KEY_RIGHT])
             {
                 shiro->Position.x += 1;
+                swimShiro->Position.x += 1;
             }
 
             if (this->Keys[GLFW_KEY_SPACE])
                 shiro->Stuck = false;
 
-            if (this->Keys[GLFW_KEY_UP])
+            if (this->Keys[GLFW_KEY_UP]) {
                 shiro->Position.y -= 1;
-            if (this->Keys[GLFW_KEY_DOWN])
+                swimShiro->Position.y -= 1;
+            }
+            if (this->Keys[GLFW_KEY_DOWN]) {
                 shiro->Position.y += 1;
+                swimShiro->Position.y += 1;
+            }
         }
     
 }
@@ -142,7 +151,7 @@ void Game::Update(float dt) {
     //update objects
     
     if (this->Level == 2) {
-
+        this->DoCollisions();
     }
     else {
         //checks for collisions
@@ -193,6 +202,8 @@ void Game::Render() {
         if (this->Level == 2) {
             Texture2D theTexture = ResourceManager::GetTexture("ocean");
             Renderer->DrawSprite(theTexture, glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f);
+
+            swimShiro->Draw(*Renderer);
         }
         else {
             Texture2D theTexture = ResourceManager::GetTexture("background");
@@ -246,11 +257,13 @@ void Game::ResetPlayer() {
     //reset player/ball states
 
     shiro->Reset(glm::vec2(this->Width / 2.0f - BALL_RADIUS, this->Height - BALL_RADIUS * 2), INITIAL_BALL_VELOCITY);
+    swimShiro->Reset(glm::vec2(this->Width / 2.0f - BALL_RADIUS, this->Height - BALL_RADIUS * 2), INITIAL_BALL_VELOCITY);
     // also disable all active powerups
     Effects->Chaos = Effects->Confuse = false;
     shiro->PassThrough = shiro->Sticky = false;
     //Player->Color = glm::vec3(1.0f);
     shiro->Color = glm::vec3(1.0f);
+    swimShiro->Color = glm::vec3(1.0f);
 }
 
 // powerups
@@ -406,24 +419,34 @@ void Game::DoCollisions() {
                 if (!(shiro->PassThrough && !box.IsSolid)) {
                     if (dir == LEFT || dir == RIGHT) {//horizontal collision
                         shiro->Velocity.x = -shiro->Velocity.x; //reverse horizontal velocity
+                        swimShiro->Velocity.x = -swimShiro->Velocity.x;
 
                         //relocate
                         float penetration = shiro->Radius - std::abs(diff_vector.x);
-                        if (dir == LEFT)
+                        if (dir == LEFT) {
                             shiro->Position.x += penetration; //move ball to right
-                        else
+                            swimShiro->Position.x += penetration;
+                        }
+                        else {
                             shiro->Position.x -= penetration;    //move ball to left
+                            swimShiro->Position.x -= penetration;
+                        }
                     }
                     else //vertical collision
                     {
                         shiro->Velocity.y = -shiro->Velocity.y; //reverse vertical velocity
+                        swimShiro->Velocity.y = -swimShiro->Velocity.y;
 
                         //relocate
                         float penetration = shiro->Radius - std::abs(diff_vector.y);
-                        if (dir == UP)
+                        if (dir == UP) {
                             shiro->Position.y -= penetration; //move ball back up
-                        else
+                            swimShiro->Position.y -= penetration;
+                        }
+                        else {
                             shiro->Position.y += penetration; //move ball back down
+                            swimShiro->Position.y += penetration;
+                        }
                     }
                 }
             }
