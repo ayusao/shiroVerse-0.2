@@ -63,6 +63,8 @@ void Game::Init() {
     ResourceManager::LoadTexture("textures/swim.png", true, "swim");
     ResourceManager::LoadTexture("textures/lvl1purple.png", true, "lvl1p");
     ResourceManager::LoadTexture("textures/lvl2purple.png", true, "lvl2p");
+    ResourceManager::LoadTexture("textures/lvl1blue.png", true, "lvl1b");
+    ResourceManager::LoadTexture("textures/lvl2blue.png", true, "lvl2b");
     ResourceManager::LoadTexture("textures/helppurple.png", true, "helpp");
     ResourceManager::LoadTexture("textures/helpblue.png", true, "helpb");
 
@@ -107,15 +109,18 @@ void Game::ProcessInput(float dt) {
         }
         if (this->Keys[GLFW_KEY_W] && !this->KeysProcessed[GLFW_KEY_W])
         {
-            this->Level = (this->Level + 1) % 4;
+            this->levelSelect = (this->levelSelect + 1) % 4;
+            this->Level = this->levelSelect;
             this->KeysProcessed[GLFW_KEY_W] = true;
         }
         if (this->Keys[GLFW_KEY_S] && !this->KeysProcessed[GLFW_KEY_S])
         {
-            if (this->Level > 0)
-                --this->Level;
+            if (this->levelSelect > 0)
+                --this->levelSelect;
             else
-                this->Level = 3;
+                this->levelSelect = 3;
+
+            this->Level = this->levelSelect;
 
             this->KeysProcessed[GLFW_KEY_S] = true;
         }
@@ -208,42 +213,84 @@ void Game::Render() {
     if (this->State == GAME_ACTIVE|| this->State == GAME_MENU || this->State == GAME_WIN)
     {
         Effects->BeginRender();
-        // draw background
 
-        if (this->Level == 2) {
-            Texture2D theTexture = ResourceManager::GetTexture("ocean");
-            Renderer->DrawSprite(theTexture, glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f);
-
-            swimShiro->Draw(*Renderer);
-        }
-        else if (this->Level == 0){
-            // Render level 0 background
+        if (this->State == GAME_MENU) {
             Texture2D backgroundTexture = ResourceManager::GetTexture("background");
             Renderer->DrawSprite(backgroundTexture, glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f);
 
-            Texture2D lvl1pTexture = ResourceManager::GetTexture("lvl1p");
-            Renderer->DrawSprite(lvl1pTexture, glm::vec2(x_postion, y_postion), glm::vec2(x_width, y_width), 0.0f);
+            if (this->levelSelect == 0) {
+                Texture2D lvl1bTexture = ResourceManager::GetTexture("lvl1b");
+                Renderer->DrawSprite(lvl1bTexture, glm::vec2(x_postion, y_postion), glm::vec2(x_width, y_width), 0.0f);
+            }
+            else {
+                Texture2D lvl1pTexture = ResourceManager::GetTexture("lvl1p");
+                Renderer->DrawSprite(lvl1pTexture, glm::vec2(x_postion, y_postion), glm::vec2(x_width, y_width), 0.0f);
+            }
 
-            Texture2D lvl2pTexture = ResourceManager::GetTexture("lvl2p");
-            Renderer->DrawSprite(lvl2pTexture, glm::vec2(x_postion, y_postion+100.0f), glm::vec2(x_width, y_width), 0.0f);
+            if (this->levelSelect == 1) {
+                Texture2D lvl1bTexture = ResourceManager::GetTexture("lvl1b");
+                Renderer->DrawSprite(lvl1bTexture, glm::vec2(x_postion, y_postion + 100.0f), glm::vec2(x_width, y_width), 0.0f);
+            }
+            else {
+                Texture2D lvl1pTexture = ResourceManager::GetTexture("lvl1p");
+                Renderer->DrawSprite(lvl1pTexture, glm::vec2(x_postion, y_postion + 100.0f), glm::vec2(x_width, y_width), 0.0f);
+            }
 
-            Texture2D helppTexture = ResourceManager::GetTexture("helpp");
-            Renderer->DrawSprite(helppTexture, glm::vec2(x_postion, y_postion + 200.0f), glm::vec2(x_width, y_width), 0.0f);
+            if (this->levelSelect == 2) {
+                Texture2D lvl2bTexture = ResourceManager::GetTexture("lvl2b");
+                Renderer->DrawSprite(lvl2bTexture, glm::vec2(x_postion, y_postion + 200.0f), glm::vec2(x_width, y_width), 0.0f);
+            }
+            else {
+                Texture2D lvl2pTexture = ResourceManager::GetTexture("lvl2p");
+                Renderer->DrawSprite(lvl2pTexture, glm::vec2(x_postion, y_postion + 200.0f), glm::vec2(x_width, y_width), 0.0f);
+            }
 
-        }
+            if (this->levelSelect == 3) {
+                Texture2D helpbTexture = ResourceManager::GetTexture("helpb");
+                Renderer->DrawSprite(helpbTexture, glm::vec2(x_postion, y_postion + 300.0f), glm::vec2(x_width, y_width), 0.0f);
+            }
+            else {
+                Texture2D helppTexture = ResourceManager::GetTexture("helpp");
+                Renderer->DrawSprite(helppTexture, glm::vec2(x_postion, y_postion + 300.0f), glm::vec2(x_width, y_width), 0.0f);
+            }
+            }
         else {
-            Texture2D theTexture = ResourceManager::GetTexture("background");
-            Renderer->DrawSprite(theTexture, glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f);
-            //draw particles
-            Particles->Draw();
-            //draw ball
-            shiro->Draw(*Renderer);
-                
-            
+            // draw background
+
+            if (this->Level == 2) {
+                Texture2D theTexture = ResourceManager::GetTexture("ocean");
+                Renderer->DrawSprite(theTexture, glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f);
+
+                swimShiro->Draw(*Renderer);
+            }
+            //else if (this->Level == 0){
+            //    // Render level 0 background
+            //    Texture2D backgroundTexture = ResourceManager::GetTexture("background");
+            //    Renderer->DrawSprite(backgroundTexture, glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f);
+
+            //    Texture2D lvl1pTexture = ResourceManager::GetTexture("lvl1p");
+            //    Renderer->DrawSprite(lvl1pTexture, glm::vec2(x_postion, y_postion), glm::vec2(x_width, y_width), 0.0f);
+
+            //    Texture2D lvl2pTexture = ResourceManager::GetTexture("lvl2p");
+            //    Renderer->DrawSprite(lvl2pTexture, glm::vec2(x_postion, y_postion+100.0f), glm::vec2(x_width, y_width), 0.0f);
+
+            //    Texture2D helppTexture = ResourceManager::GetTexture("helpp");
+            //    Renderer->DrawSprite(helppTexture, glm::vec2(x_postion, y_postion + 200.0f), glm::vec2(x_width, y_width), 0.0f);
+
+            //}
+            else {
+                Texture2D theTexture = ResourceManager::GetTexture("background");
+                Renderer->DrawSprite(theTexture, glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f);
+                //draw particles
+                Particles->Draw();
+                //draw ball
+                shiro->Draw(*Renderer);
+
+
+            }
+            // draw level
+            this->Levels[this->Level].Draw(*Renderer);
         }
-        // draw level
-        this->Levels[this->Level].Draw(*Renderer);
-   
         // draw powerups
         //for (PowerUp& powerUp : this->PowerUps)
         //    if (!powerUp.Destroyed)
