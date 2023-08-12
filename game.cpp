@@ -18,6 +18,11 @@ ParticleGenerator* Particles;
 PostProcessor* Effects;
 ISoundEngine* SoundEngine = createIrrKlangDevice();
 float ShakeTime = 0.0f;
+//data related to the homepage, positions of the textures
+float x_postion = 350.0f;
+float y_postion = 150.0f;
+float x_width = 100.0f;
+float y_width = 60.0f;
 
 
 Game::Game(unsigned int width, unsigned int height) 
@@ -56,6 +61,12 @@ void Game::Init() {
     ResourceManager::LoadTexture("textures/particle.png", true, "particle");
     ResourceManager::LoadTexture("textures/passed.png", true, "passed");
     ResourceManager::LoadTexture("textures/swim.png", true, "swim");
+    ResourceManager::LoadTexture("textures/lvl1purple.png", true, "lvl1p");
+    ResourceManager::LoadTexture("textures/lvl2purple.png", true, "lvl2p");
+    ResourceManager::LoadTexture("textures/helppurple.png", true, "helpp");
+    ResourceManager::LoadTexture("textures/helpblue.png", true, "helpb");
+
+
         // set render-specific controls
     Shader theShader = ResourceManager::GetShader("sprite");
     Renderer = new SpriteRenderer(theShader);
@@ -205,17 +216,28 @@ void Game::Render() {
 
             swimShiro->Draw(*Renderer);
         }
+        else if (this->Level == 0){
+            // Render level 0 background
+            Texture2D backgroundTexture = ResourceManager::GetTexture("background");
+            Renderer->DrawSprite(backgroundTexture, glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f);
+
+            Texture2D lvl1pTexture = ResourceManager::GetTexture("lvl1p");
+            Renderer->DrawSprite(lvl1pTexture, glm::vec2(x_postion, y_postion), glm::vec2(x_width, y_width), 0.0f);
+
+            Texture2D lvl2pTexture = ResourceManager::GetTexture("lvl2p");
+            Renderer->DrawSprite(lvl2pTexture, glm::vec2(x_postion, y_postion+100.0f), glm::vec2(x_width, y_width), 0.0f);
+
+            Texture2D helppTexture = ResourceManager::GetTexture("helpp");
+            Renderer->DrawSprite(helppTexture, glm::vec2(x_postion, y_postion + 200.0f), glm::vec2(x_width, y_width), 0.0f);
+
+        }
         else {
             Texture2D theTexture = ResourceManager::GetTexture("background");
             Renderer->DrawSprite(theTexture, glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f);
-
-            if (this->Level != 0)
-            {
-                //draw particles
-                Particles->Draw();
-                //draw ball
-                shiro->Draw(*Renderer);
-            }
+            //draw particles
+            Particles->Draw();
+            //draw ball
+            shiro->Draw(*Renderer);
                 
             
         }
