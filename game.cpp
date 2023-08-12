@@ -209,10 +209,15 @@ void Game::Render() {
             Texture2D theTexture = ResourceManager::GetTexture("background");
             Renderer->DrawSprite(theTexture, glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f);
 
-            //draw particles
-            Particles->Draw();
-            //draw ball
-            shiro->Draw(*Renderer);
+            if (this->Level != 0)
+            {
+                //draw particles
+                Particles->Draw();
+                //draw ball
+                shiro->Draw(*Renderer);
+            }
+                
+            
         }
         // draw level
         this->Levels[this->Level].Draw(*Renderer);
