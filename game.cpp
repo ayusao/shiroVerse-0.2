@@ -20,7 +20,7 @@ ISoundEngine* SoundEngine = createIrrKlangDevice();
 float ShakeTime = 0.0f;
 //data related to the homepage, positions of the textures
 float x_postion = 350.0f;
-float y_postion = 150.0f;
+float y_postion = 130.0f;
 float x_width = 100.0f;
 float y_width = 60.0f;
 
@@ -67,7 +67,8 @@ void Game::Init() {
     ResourceManager::LoadTexture("textures/lvl2blue.png", true, "lvl2b");
     ResourceManager::LoadTexture("textures/helppurple.png", true, "helpp");
     ResourceManager::LoadTexture("textures/helpblue.png", true, "helpb");
-
+    ResourceManager::LoadTexture("textures/exitpurple.png", true, "exitp");
+    ResourceManager::LoadTexture("textures/exitblue.png", true, "exitb");
 
         // set render-specific controls
     Shader theShader = ResourceManager::GetShader("sprite");
@@ -109,12 +110,6 @@ void Game::ProcessInput(float dt) {
         }
         if (this->Keys[GLFW_KEY_W] && !this->KeysProcessed[GLFW_KEY_W])
         {
-            this->levelSelect = (this->levelSelect + 1) % 4;
-            this->Level = this->levelSelect;
-            this->KeysProcessed[GLFW_KEY_W] = true;
-        }
-        if (this->Keys[GLFW_KEY_S] && !this->KeysProcessed[GLFW_KEY_S])
-        {
             if (this->levelSelect > 0)
                 --this->levelSelect;
             else
@@ -122,6 +117,12 @@ void Game::ProcessInput(float dt) {
 
             this->Level = this->levelSelect;
 
+            this->KeysProcessed[GLFW_KEY_W] = true;
+        }
+        if (this->Keys[GLFW_KEY_S] && !this->KeysProcessed[GLFW_KEY_S])
+        {
+            this->levelSelect = (this->levelSelect + 1) % 4;
+            this->Level = this->levelSelect;
             this->KeysProcessed[GLFW_KEY_S] = true;
         }
     }
@@ -137,12 +138,12 @@ void Game::ProcessInput(float dt) {
         {
             float velocity = PLAYER_VELOCITY * dt;
             // move playerboard
-            if (this->Keys[GLFW_KEY_A] || this->Keys[GLFW_KEY_LEFT])
+            if (this->Keys[GLFW_KEY_LEFT])
             {
                 shiro->Position.x -= 1;
                 swimShiro->Position.x -= 1;
             }
-            if (this->Keys[GLFW_KEY_D] || this->Keys[GLFW_KEY_RIGHT])
+            if (this->Keys[GLFW_KEY_RIGHT])
             {
                 shiro->Position.x += 1;
                 swimShiro->Position.x += 1;
@@ -229,35 +230,34 @@ void Game::Render() {
             }
 
             if (this->levelSelect == 1) {
-                theTexture = ResourceManager::GetTexture("lvl1b");
+                theTexture = ResourceManager::GetTexture("lvl2b");
                 Renderer->DrawSprite(theTexture, glm::vec2(x_postion, y_postion + 100.0f), glm::vec2(x_width, y_width), 0.0f);
             }
-            else { theTexture = ResourceManager::GetTexture("lvl1p");
+            else { theTexture = ResourceManager::GetTexture("lvl2p");
                 Renderer->DrawSprite(theTexture, glm::vec2(x_postion, y_postion + 100.0f), glm::vec2(x_width, y_width), 0.0f);
             }
 
             if (this->levelSelect == 2) {
-                theTexture = ResourceManager::GetTexture("lvl2b");
+                theTexture = ResourceManager::GetTexture("helpb");
                 Renderer->DrawSprite(theTexture, glm::vec2(x_postion, y_postion + 200.0f), glm::vec2(x_width, y_width), 0.0f);
-            }
-            else {
-                theTexture = ResourceManager::GetTexture("lvl2p");
-                Renderer->DrawSprite(theTexture, glm::vec2(x_postion, y_postion + 200.0f), glm::vec2(x_width, y_width), 0.0f);
-            }
-
-            if (this->levelSelect == 3) {
-               theTexture = ResourceManager::GetTexture("helpb");
-                Renderer->DrawSprite(theTexture, glm::vec2(x_postion, y_postion + 300.0f), glm::vec2(x_width, y_width), 0.0f);
             }
             else {
                 theTexture = ResourceManager::GetTexture("helpp");
+                Renderer->DrawSprite(theTexture, glm::vec2(x_postion, y_postion + 200.0f), glm::vec2(x_width, y_width), 0.0f);
+            }
+            if (this->levelSelect == 3) {
+                theTexture = ResourceManager::GetTexture("exitb");
+                Renderer->DrawSprite(theTexture, glm::vec2(x_postion, y_postion + 300.0f), glm::vec2(x_width, y_width), 0.0f);
+            }
+            else {
+                theTexture = ResourceManager::GetTexture("exitp");
                 Renderer->DrawSprite(theTexture, glm::vec2(x_postion, y_postion + 300.0f), glm::vec2(x_width, y_width), 0.0f);
             }
             }
         else {
             // draw background
 
-            if (this->Level == 2) {
+            if (this->Level == 1) {
                 theTexture = ResourceManager::GetTexture("ocean");
                 Renderer->DrawSprite(theTexture, glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f);
 
@@ -309,9 +309,6 @@ void Game::Render() {
 
     }
 
-    ///
-    /// the text code
-    ///
 }
 
 void Game::ResetLevel() {
