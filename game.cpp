@@ -91,8 +91,8 @@ void Game::Init() {
     // load levels
     GameLevel one; one.Load("levels/one.lvl", this->Width, this->Height*0.8);
     GameLevel two; two.Load("levels/two.lvl", this->Width, this->Height*0.8);
-    GameLevel three; three.Load("levels/three.lvl", this->Width, this->Height*0.8);
-    GameLevel four; //required for exit button
+    GameLevel three; /*three.Load("levels/three.lvl", this->Width, this->Height*0.8);*/
+    GameLevel four; //might be required for exit button
     this->Levels.push_back(one);
     this->Levels.push_back(two);
     this->Levels.push_back(three);
@@ -180,7 +180,6 @@ void Game::Update(float dt) {
         Particles->Update(dt, *shiro, 2, glm::vec2(shiro->Radius / 2.0f));
     }
     
-
     //update powerups
    // this->UpdatePowerUps(dt);
   
@@ -201,14 +200,23 @@ void Game::Update(float dt) {
         }
         this->ResetPlayer();
     }
-
     //win check
     if (this->State == GAME_ACTIVE && this->Levels[this->Level].IsCompleted())
     {
-        this->ResetLevel();
-        this->ResetPlayer();
-        Effects->Chaos = true;
-        this->State = GAME_WIN;
+        // Check if this is the last level
+        if (this->Level == this->Levels.size() - 1)
+        {
+            // All levels are completed, show win page
+            this->ResetLevel();
+            this->ResetPlayer();
+            Effects->Chaos = true;
+            this->State = GAME_WIN;
+        }
+        else
+        {
+            this->Level++;
+            this->ResetPlayer();
+        }
     }
 }
 
