@@ -69,6 +69,7 @@ void Game::Init() {
     ResourceManager::LoadTexture("textures/helpblue.png", true, "helpb");
     ResourceManager::LoadTexture("textures/exitpurple.png", true, "exitp");
     ResourceManager::LoadTexture("textures/exitblue.png", true, "exitb");
+    ResourceManager::LoadTexture("textures/shark.png", true, "shark");
 
         // set render-specific controls
     Shader theShader = ResourceManager::GetShader("sprite");
@@ -77,22 +78,26 @@ void Game::Init() {
     Particles = new ParticleGenerator(
         ResourceManager::GetShader("particle"),
         ResourceManager::GetTexture("particle"),
-        500
-    );
+        500);
+
+    //setting shark controls
+    Shader spriteShader = ResourceManager::GetShader("sprite");
+    Renderer = new SpriteRenderer(spriteShader);
+
+    // Load shark texture
+    Texture2D sharkTexture = ResourceManager::GetTexture("shark");
 
     Effects = new PostProcessor(ResourceManager::GetShader("postprocessing"), this->Width, this->Height);
     // load levels
     GameLevel one; one.Load("levels/one.lvl", this->Width, this->Height*0.8);
     GameLevel two; two.Load("levels/two.lvl", this->Width, this->Height*0.8);
     GameLevel three; three.Load("levels/three.lvl", this->Width, this->Height*0.8);
-    GameLevel four; four.Load("levels/four.lvl", this->Width, this->Height*0.8);
+    GameLevel four; //required for exit button
     this->Levels.push_back(one);
     this->Levels.push_back(two);
     this->Levels.push_back(three);
     this->Levels.push_back(four);
     this->Level = 0;
-
-
 
     glm::vec2 shiroPos = glm::vec2(this->Width / 2.0f - BALL_RADIUS, this->Height-BALL_RADIUS*2.0f);
     shiro = new PlayerObject(shiroPos, BALL_RADIUS, INITIAL_BALL_VELOCITY, ResourceManager::GetTexture("face"));
@@ -132,7 +137,6 @@ void Game::ProcessInput(float dt) {
             Effects->Chaos = false;
             this->State = GAME_MENU;
         }
-
     }
         if (this->State == GAME_ACTIVE)
         {
@@ -161,7 +165,6 @@ void Game::ProcessInput(float dt) {
                 swimShiro->Position.y += 1;
             }
         }
-    
 }
 
 void Game::Update(float dt) {
@@ -206,7 +209,6 @@ void Game::Update(float dt) {
         this->ResetPlayer();
         Effects->Chaos = true;
         this->State = GAME_WIN;
-
     }
 }
 
@@ -253,7 +255,7 @@ void Game::Render() {
                 theTexture = ResourceManager::GetTexture("exitp");
                 Renderer->DrawSprite(theTexture, glm::vec2(x_postion, y_postion + 300.0f), glm::vec2(x_width, y_width), 0.0f);
             }
-            }
+         }
         else {
             // draw background
 
@@ -313,14 +315,16 @@ void Game::Render() {
 
 void Game::ResetLevel() {
     if (this->Level == 0)
-        this->Levels[0].Load("levels/one.lvl", this->Width, this->Height *0.8);
+        this->Levels[0].Load("levels/one.lvl", this->Width, this->Height * 0.8);
     else if (this->Level == 1)
-        this->Levels[1].Load("levels/two.lvl", this->Width, this->Height *0.8);
+        this->Levels[1].Load("levels/two.lvl", this->Width, this->Height * 0.8);
     else if (this->Level == 2)
-        this->Levels[2].Load("levels/three.lvl", this->Width, this->Height *0.8);
+        this->Levels[2].Load("levels/three.lvl", this->Width, this->Height * 0.8);
     else if (this->Level == 3)
-        this->Levels[3].Load("levels/four.lvl", this->Width, this->Height * 0.8);
-
+    {
+        glfwTerminate();    // Terminate GLFW
+        exit(0);          // Exit the program
+    }
     this->Lives = 3;
 }
 
