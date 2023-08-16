@@ -14,6 +14,7 @@ using namespace irrklang;
 SpriteRenderer* Renderer;
 PlayerObject* shiro;  //the dog in spaceship
 PlayerObject* swimShiro;
+PlayerObject* shark;  //sharks in the ocean
 ParticleGenerator* Particles;
 PostProcessor* Effects;
 ISoundEngine* SoundEngine = createIrrKlangDevice();
@@ -36,6 +37,7 @@ Game::~Game() {
     delete Particles;
     delete Effects;
     delete swimShiro;
+    delete shark;
     SoundEngine->drop();
 }
 
@@ -69,7 +71,9 @@ void Game::Init() {
     ResourceManager::LoadTexture("textures/helpblue.png", true, "helpb");
     ResourceManager::LoadTexture("textures/exitpurple.png", true, "exitp");
     ResourceManager::LoadTexture("textures/exitblue.png", true, "exitb");
-    ResourceManager::LoadTexture("textures/shark.png", true, "shark");
+    ResourceManager::LoadTexture("textures/shark.png", true, "sharkright");
+    ResourceManager::LoadTexture("textures/sharkleft.png", true, "sharkleft");
+
 
         // set render-specific controls
     Shader theShader = ResourceManager::GetShader("sprite");
@@ -84,8 +88,8 @@ void Game::Init() {
     Shader spriteShader = ResourceManager::GetShader("sprite");
     Renderer = new SpriteRenderer(spriteShader);
 
-    // Load shark texture
-    Texture2D sharkTexture = ResourceManager::GetTexture("shark");
+    //// Load shark texture
+    //Texture2D sharkTexture = ResourceManager::GetTexture("sharkright");
 
     Effects = new PostProcessor(ResourceManager::GetShader("postprocessing"), this->Width, this->Height);
     // load levels
@@ -102,6 +106,7 @@ void Game::Init() {
     glm::vec2 shiroPos = glm::vec2(this->Width / 2.0f - BALL_RADIUS, this->Height-BALL_RADIUS*2.0f);
     shiro = new PlayerObject(shiroPos, BALL_RADIUS, INITIAL_BALL_VELOCITY, ResourceManager::GetTexture("face"));
     swimShiro = new PlayerObject(shiroPos, BALL_RADIUS, INITIAL_BALL_VELOCITY, ResourceManager::GetTexture("swim"));
+    //shark = new PlayerObject();
     //audio
     SoundEngine->play2D("audio/breakout.mp3", true);
 }
@@ -204,7 +209,8 @@ void Game::Update(float dt) {
     if (this->State == GAME_ACTIVE && this->Levels[this->Level].IsCompleted())
     {
         // Check if this is the last level
-        if (this->Level == this->Levels.size() - 1)
+    
+        if (this->Level == this->Levels.size() - 2)
         {
             // All levels are completed, show win page
             this->ResetLevel();
@@ -212,7 +218,11 @@ void Game::Update(float dt) {
             Effects->Chaos = true;
             this->State = GAME_WIN;
         }
-        else
+        else if (this->Level == 3) {
+            glfwTerminate();    // Terminate GLFW
+            exit(0);          // Exit the program
+        }
+        else //increase the level
         {
             this->Level++;
             this->ResetPlayer();
@@ -273,21 +283,6 @@ void Game::Render() {
 
                 swimShiro->Draw(*Renderer);
             }
-            //else if (this->Level == 0){
-            //    // Render level 0 background
-            //    Texture2D backgroundTexture = ResourceManager::GetTexture("background");
-            //    Renderer->DrawSprite(backgroundTexture, glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f);
-
-            //    Texture2D lvl1pTexture = ResourceManager::GetTexture("lvl1p");
-            //    Renderer->DrawSprite(lvl1pTexture, glm::vec2(x_postion, y_postion), glm::vec2(x_width, y_width), 0.0f);
-
-            //    Texture2D lvl2pTexture = ResourceManager::GetTexture("lvl2p");
-            //    Renderer->DrawSprite(lvl2pTexture, glm::vec2(x_postion, y_postion+100.0f), glm::vec2(x_width, y_width), 0.0f);
-
-            //    Texture2D helppTexture = ResourceManager::GetTexture("helpp");
-            //    Renderer->DrawSprite(helppTexture, glm::vec2(x_postion, y_postion + 200.0f), glm::vec2(x_width, y_width), 0.0f);
-
-            //}
             else {
                 theTexture = ResourceManager::GetTexture("background");
                 Renderer->DrawSprite(theTexture, glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f);
@@ -295,8 +290,6 @@ void Game::Render() {
                 Particles->Draw();
                 //draw ball
                 shiro->Draw(*Renderer);
-
-
             }
             // draw level
             this->Levels[this->Level].Draw(*Renderer);
@@ -328,11 +321,7 @@ void Game::ResetLevel() {
         this->Levels[1].Load("levels/two.lvl", this->Width, this->Height * 0.8);
     else if (this->Level == 2)
         this->Levels[2].Load("levels/three.lvl", this->Width, this->Height * 0.8);
-    else if (this->Level == 3)
-    {
-        glfwTerminate();    // Terminate GLFW
-        exit(0);          // Exit the program
-    }
+    
     this->Lives = 3;
 }
 
