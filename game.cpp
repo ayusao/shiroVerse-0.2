@@ -104,9 +104,11 @@ void Game::Init() {
     this->Level = 0;
 
     glm::vec2 shiroPos = glm::vec2(this->Width / 2.0f - BALL_RADIUS, this->Height-BALL_RADIUS*2.0f);
+    glm::vec2 sharkPos1(780.0f, 300.0f);
+    glm::vec2 sharkPos2(00.0f, 300.0f);
     shiro = new PlayerObject(shiroPos, BALL_RADIUS, INITIAL_BALL_VELOCITY, ResourceManager::GetTexture("face"));
     swimShiro = new PlayerObject(shiroPos, BALL_RADIUS, INITIAL_BALL_VELOCITY, ResourceManager::GetTexture("swim"));
-    //shark = new PlayerObject();
+    shark = new PlayerObject(sharkPos1, sharkRadius, sharkVelocity, ResourceManager::GetTexture("sharkright"));
     //audio
     SoundEngine->play2D("audio/breakout.mp3", true);
 }
@@ -282,6 +284,7 @@ void Game::Render() {
                 Renderer->DrawSprite(theTexture, glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f);
 
                 swimShiro->Draw(*Renderer);
+                shark->Draw(*Renderer);
             }
             else {
                 theTexture = ResourceManager::GetTexture("background");
@@ -309,9 +312,7 @@ void Game::Render() {
             theTexture = ResourceManager::GetTexture("passed");
             Renderer->DrawSprite(theTexture, glm::vec2(this->Width/4.0f, this->Height/4.0f), glm::vec2(this->Width / 2.0f, this->Height / 2.0f), 0.0f);
         }
-
     }
-
 }
 
 void Game::ResetLevel() {
@@ -321,7 +322,6 @@ void Game::ResetLevel() {
         this->Levels[1].Load("levels/two.lvl", this->Width, this->Height * 0.8);
     else if (this->Level == 2)
         this->Levels[2].Load("levels/three.lvl", this->Width, this->Height * 0.8);
-    
     this->Lives = 3;
 }
 

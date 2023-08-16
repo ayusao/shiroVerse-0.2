@@ -40,6 +40,11 @@ const float BALL_RADIUS = 18.0f;
 //initial ball velocity
 const glm::vec2 INITIAL_BALL_VELOCITY(100.0f, -350.0f);
 
+//shark
+const float sharkRadius = 20.0f;
+const glm::vec2 sharkVelocity(100.0f, 0.0f);
+
+
 //easy access to each of the components and manafeability
 class Game {
 public:
