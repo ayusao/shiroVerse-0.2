@@ -20,6 +20,11 @@ public:
 	bool	  IsSolid;
 	bool	  Destroyed;
 
+	float Radius;	
+	bool Stuck = false;
+	bool PassThrough, Sticky;
+	bool Keys[1024];
+
 	//render state
 	Texture2D Sprite;
 

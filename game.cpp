@@ -14,7 +14,7 @@ using namespace irrklang;
 SpriteRenderer* Renderer;
 PlayerObject* shiro;  //the dog in spaceship
 PlayerObject* swimShiro;
-PlayerObject* shark;  //sharks in the ocean
+PlayerObject* shark, *shark2;  //sharks in the ocean
 ParticleGenerator* Particles;
 PostProcessor* Effects;
 ISoundEngine* SoundEngine = createIrrKlangDevice();
@@ -24,6 +24,7 @@ float x_postion = 350.0f;
 float y_postion = 130.0f;
 float x_width = 100.0f;
 float y_width = 60.0f;
+//std::vector<shark> sharks; //vector to hold shark objects
 
 
 Game::Game(unsigned int width, unsigned int height) 
@@ -105,10 +106,12 @@ void Game::Init() {
 
     glm::vec2 shiroPos = glm::vec2(this->Width / 2.0f - BALL_RADIUS, this->Height-BALL_RADIUS*2.0f);
     glm::vec2 sharkPos1(780.0f, 300.0f);
-    glm::vec2 sharkPos2(00.0f, 300.0f);
+    glm::vec2 sharkPos2(00.0f, 400.0f);
     shiro = new PlayerObject(shiroPos, BALL_RADIUS, INITIAL_BALL_VELOCITY, ResourceManager::GetTexture("face"));
     swimShiro = new PlayerObject(shiroPos, BALL_RADIUS, INITIAL_BALL_VELOCITY, ResourceManager::GetTexture("swim"));
     shark = new PlayerObject(sharkPos1, sharkRadius, sharkVelocity, ResourceManager::GetTexture("sharkright"));
+    shark2 = new PlayerObject(sharkPos2, sharkRadius, sharkVelocity, ResourceManager::GetTexture("sharkleft"));
+
     //audio
     SoundEngine->play2D("audio/breakout.mp3", true);
 }
@@ -148,6 +151,14 @@ void Game::ProcessInput(float dt) {
         if (this->State == GAME_ACTIVE)
         {
             float velocity = PLAYER_VELOCITY * dt;
+            shark->Position += shark->Velocity * dt;
+            shark->Velocity.x = -sharkVelocity.x; // Set initial velocity to move left
+            shark->Velocity.y = 0.0f; // No vertical movement for the shark
+            // Check if the shark has moved off the left edge of the screen
+            if (shark->Position.x + sharkRadius < 0.0f) {
+                // Wrap the shark's position to the right edge of the screen
+                shark->Position.x = this->Width;
+            }
             // move playerboard
             if (this->Keys[GLFW_KEY_LEFT])
             {
@@ -179,6 +190,7 @@ void Game::Update(float dt) {
     
     if (this->Level == 2) {
         this->DoCollisions();
+        
     }
     else {
         //checks for collisions
