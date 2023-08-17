@@ -14,7 +14,7 @@ using namespace irrklang;
 SpriteRenderer* Renderer;
 PlayerObject* shiro;  //the dog in spaceship
 PlayerObject* swimShiro;
-PlayerObject* shark, *shark2;  //sharks in the ocean
+//PlayerObject* shark, *shark2;  //sharks in the ocean
 ParticleGenerator* Particles;
 PostProcessor* Effects;
 ISoundEngine* SoundEngine = createIrrKlangDevice();
@@ -24,8 +24,7 @@ float x_postion = 350.0f;
 float y_postion = 130.0f;
 float x_width = 100.0f;
 float y_width = 60.0f;
-//std::vector<shark> sharks; //vector to hold shark objects
-
+std::vector<shark> sharks; //vector to hold shark objects
 
 Game::Game(unsigned int width, unsigned int height) 
 	:State(GAME_MENU), Keys(), Width(width), Height(height),Lives(3) {
@@ -38,7 +37,8 @@ Game::~Game() {
     delete Particles;
     delete Effects;
     delete swimShiro;
-    delete shark;
+    sharks.clear();
+
     SoundEngine->drop();
 }
 
@@ -74,6 +74,12 @@ void Game::Init() {
     ResourceManager::LoadTexture("textures/exitblue.png", true, "exitb");
     ResourceManager::LoadTexture("textures/shark.png", true, "sharkright");
     ResourceManager::LoadTexture("textures/sharkleft.png", true, "sharkleft");
+    //setting shark controls
+    Shader spriteShader = ResourceManager::GetShader("sprite");
+    Renderer = new SpriteRenderer(spriteShader);
+    //// Load shark texture
+    Texture2D sharkTextureright = ResourceManager::GetTexture("sharkright");
+    Texture2D sharkTextureleft = ResourceManager::GetTexture("sharkleft");
 
 
         // set render-specific controls
@@ -84,13 +90,6 @@ void Game::Init() {
         ResourceManager::GetShader("particle"),
         ResourceManager::GetTexture("particle"),
         500);
-
-    //setting shark controls
-    Shader spriteShader = ResourceManager::GetShader("sprite");
-    Renderer = new SpriteRenderer(spriteShader);
-
-    //// Load shark texture
-    //Texture2D sharkTexture = ResourceManager::GetTexture("sharkright");
 
     Effects = new PostProcessor(ResourceManager::GetShader("postprocessing"), this->Width, this->Height);
     // load levels
@@ -105,12 +104,17 @@ void Game::Init() {
     this->Level = 0;
 
     glm::vec2 shiroPos = glm::vec2(this->Width / 2.0f - BALL_RADIUS, this->Height-BALL_RADIUS*2.0f);
-    glm::vec2 sharkPos1(780.0f, 300.0f);
-    glm::vec2 sharkPos2(00.0f, 400.0f);
+    glm::vec2 sharkPos1(840.0f, 300.0f);
+    glm::vec2 sharkPos2(-20.0f, 200.0f);
+    glm::vec2 sharkPos3(790.0f, 130.0f);
+    glm::vec2 sharkPos4(00.0f, 400.0f);
     shiro = new PlayerObject(shiroPos, BALL_RADIUS, INITIAL_BALL_VELOCITY, ResourceManager::GetTexture("face"));
     swimShiro = new PlayerObject(shiroPos, BALL_RADIUS, INITIAL_BALL_VELOCITY, ResourceManager::GetTexture("swim"));
-    shark = new PlayerObject(sharkPos1, sharkRadius, sharkVelocity, ResourceManager::GetTexture("sharkright"));
-    shark2 = new PlayerObject(sharkPos2, sharkRadius, sharkVelocity, ResourceManager::GetTexture("sharkleft"));
+    sharks.emplace_back(sharkPos1, sharkRadius, sharkVelocityleft, sharkTextureright);
+    sharks.emplace_back(sharkPos2, sharkRadius, sharkVelocityright, sharkTextureleft);
+    sharks.emplace_back(sharkPos3, sharkRadius, sharkVelocityleft, sharkTextureright);
+    sharks.emplace_back(sharkPos4, sharkRadius, sharkVelocityright, sharkTextureleft);
+    //sharks.emplace_back(sharkPos5, sharkRadius, sharkVelocityleft, sharkTextureright);
 
     //audio
     SoundEngine->play2D("audio/breakout.mp3", true);
@@ -148,17 +152,32 @@ void Game::ProcessInput(float dt) {
             this->State = GAME_MENU;
         }
     }
-        if (this->State == GAME_ACTIVE)
+    if (this->State == GAME_ACTIVE)
+    {
+        float velocity = PLAYER_VELOCITY * dt;
+        for (auto& shark : sharks)
         {
-            float velocity = PLAYER_VELOCITY * dt;
-            shark->Position += shark->Velocity * dt;
-            shark->Velocity.x = -sharkVelocity.x; // Set initial velocity to move left
-            shark->Velocity.y = 0.0f; // No vertical movement for the shark
-            // Check if the shark has moved off the left edge of the screen
-            if (shark->Position.x + sharkRadius < 0.0f) {
-                // Wrap the shark's position to the right edge of the screen
-                shark->Position.x = this->Width;
+            shark.Position += shark.Velocity * dt;
+
+            //if (shark.Sprite.GetName() == "sharkright")
+            //{
+            //    if (shark.Position.x - shark.Radius > this->Width) {
+            //        //shark.Position.x = -shark.Radius; // Wrap to the left edge
+            //    }
+            //}
+            //else if (shark.Sprite.GetName() == "sharkleft") {
+            //    if (shark.Position.x + shark.Radius < 0.0f) {
+            //        //shark.Position.x = this->Width + shark.Radius; // Wrap to the right edge
+            //    }
+            //}
+            if (shark.Position.x + shark.Radius < 0.0f) {
+                       shark.Position.x = this->Width + shark.Radius; // Wrap to the right edge
             }
+            if (shark.Position.x - shark.Radius > this->Width) {
+                   shark.Position.x = -shark.Radius; // Wrap to the left edge
+            } 
+        }
+
             // move playerboard
             if (this->Keys[GLFW_KEY_LEFT])
             {
@@ -183,8 +202,7 @@ void Game::ProcessInput(float dt) {
                 swimShiro->Position.y += 1;
             }
         }
-}
-
+    }
 void Game::Update(float dt) {
     //update objects
     
@@ -296,7 +314,10 @@ void Game::Render() {
                 Renderer->DrawSprite(theTexture, glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f);
 
                 swimShiro->Draw(*Renderer);
-                shark->Draw(*Renderer);
+                for (auto& shark : sharks)
+                {
+                    shark.Draw(*Renderer);
+                }
             }
             else {
                 theTexture = ResourceManager::GetTexture("background");

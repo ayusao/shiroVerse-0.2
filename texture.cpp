@@ -28,3 +28,6 @@ void Texture2D::Generate(unsigned int width, unsigned int height, unsigned char*
 void Texture2D::Bind() const {
 	glBindTexture(GL_TEXTURE_2D, this->ID);
 }
+const char* Texture2D::GetName() const {
+	return textureName;
+}

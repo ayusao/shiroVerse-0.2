@@ -42,7 +42,8 @@ const glm::vec2 INITIAL_BALL_VELOCITY(100.0f, -350.0f);
 
 //shark
 const float sharkRadius = 20.0f;
-const glm::vec2 sharkVelocity(100.0f, 0.0f);
+const glm::vec2 sharkVelocityleft(-160.0f, 0.0f);  // Move left
+const glm::vec2 sharkVelocityright(160.0f, 0.0f);   // Move right
 
 
 //easy access to each of the components and manafeability

@@ -20,10 +20,10 @@ public:
 	bool	  IsSolid;
 	bool	  Destroyed;
 
-	float Radius;	
+	/*float Radius;	
 	bool Stuck = false;
 	bool PassThrough, Sticky;
-	bool Keys[1024];
+	bool Keys[1024];*/
 
 	//render state
 	Texture2D Sprite;

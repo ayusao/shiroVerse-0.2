@@ -33,15 +33,15 @@ public:
 	/*glm::vec2 Move(float dt);*/
 
 };
-class Shark : public GameObject {
+class shark : public GameObject {
 public:
 	float Radius;
 
 	bool Stuck = false;
 	bool PassThrough, Sticky;
 	bool Keys[1024];
-	Shark();
-	Shark(glm::vec2 position, float radius, glm::vec2 velocity, Texture2D sprite);
+	shark();
+	shark(glm::vec2 position, float radius, glm::vec2 velocity, Texture2D sprite);
 
 	//to limit the ball inside the window bounds
 	glm::vec2 Move(float dt, unsigned int window_width);
