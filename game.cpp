@@ -550,7 +550,7 @@ void Game::DoCollisions() {
                 }
                 else {
                     //if the ball hits the solid block then we enable the shake effect
-                   ShakeTime = 0.02f;
+                   ShakeTime = 0.001f;
                     Effects->Shake = true;
                     SoundEngine->play2D("audio/solid.wav", false);
                 }
