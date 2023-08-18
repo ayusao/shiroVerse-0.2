@@ -40,6 +40,9 @@ public:
 	bool Stuck = false;
 	bool PassThrough, Sticky;
 	bool Keys[1024];
+
+
+	
 	shark();
 	shark(glm::vec2 position, float radius, glm::vec2 velocity, Texture2D sprite);
 

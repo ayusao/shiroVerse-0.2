@@ -19,6 +19,9 @@ ParticleGenerator* Particles;
 PostProcessor* Effects;
 ISoundEngine* SoundEngine = createIrrKlangDevice();
 float ShakeTime = 0.0f;
+float sharkRenderTimer = 0.0f;
+const float sharkRenderDelay = 3.0f; // Adjust this value to set the delay in seconds
+bool rendersharks = false;
 //data related to the homepage, positions of the textures
 float x_postion = 350.0f;
 float y_postion = 130.0f;
@@ -63,6 +66,7 @@ void Game::Init() {
     ResourceManager::LoadTexture("textures/astroids.png", true, "block_solid");
     ResourceManager::LoadTexture("textures/particle.png", true, "particle");
     ResourceManager::LoadTexture("textures/passed.png", true, "passed");
+    ResourceManager::LoadTexture("textures/wasted.png", true, "wasted");
     ResourceManager::LoadTexture("textures/swim.png", true, "swim");
     ResourceManager::LoadTexture("textures/lvl1purple.png", true, "lvl1p");
     ResourceManager::LoadTexture("textures/lvl2purple.png", true, "lvl2p");
@@ -114,7 +118,6 @@ void Game::Init() {
     sharks.emplace_back(sharkPos2, sharkRadius, sharkVelocityright, sharkTextureleft);
     sharks.emplace_back(sharkPos3, sharkRadius, sharkVelocityleft, sharkTextureright);
     sharks.emplace_back(sharkPos4, sharkRadius, sharkVelocityright, sharkTextureleft);
-    //sharks.emplace_back(sharkPos5, sharkRadius, sharkVelocityleft, sharkTextureright);
 
     //audio
     SoundEngine->play2D("audio/breakout.mp3", true);
@@ -152,32 +155,32 @@ void Game::ProcessInput(float dt) {
             this->State = GAME_MENU;
         }
     }
+    if (this->State == GAME_OVER)
+    {
+        if (this->Keys[GLFW_KEY_ENTER]) {
+            this->KeysProcessed[GLFW_KEY_ENTER] = true;
+            Effects->Chaos = false;
+            this->State = GAME_MENU;
+        }
+    }
     if (this->State == GAME_ACTIVE)
     {
         float velocity = PLAYER_VELOCITY * dt;
-        for (auto& shark : sharks)
-        {
-            shark.Position += shark.Velocity * dt;
-
-            //if (shark.Sprite.GetName() == "sharkright")
-            //{
-            //    if (shark.Position.x - shark.Radius > this->Width) {
-            //        //shark.Position.x = -shark.Radius; // Wrap to the left edge
-            //    }
-            //}
-            //else if (shark.Sprite.GetName() == "sharkleft") {
-            //    if (shark.Position.x + shark.Radius < 0.0f) {
-            //        //shark.Position.x = this->Width + shark.Radius; // Wrap to the right edge
-            //    }
-            //}
-            if (shark.Position.x + shark.Radius < 0.0f) {
-                       shark.Position.x = this->Width + shark.Radius; // Wrap to the right edge
+        if (this->Level == 1) {
+            for (auto& shark : sharks)
+            {
+                shark.Position += shark.Velocity * dt;
+                if (shark.Position.x + shark.Radius < 0.0f) {
+                    shark.Position.x = this->Width + shark.Radius; // Wrap to the right edge
+                }
+                if (shark.Position.x - shark.Radius > this->Width) {
+                    shark.Position.x = -shark.Radius; // Wrap to the left edge
+                }
             }
-            if (shark.Position.x - shark.Radius > this->Width) {
-                   shark.Position.x = -shark.Radius; // Wrap to the left edge
-            } 
+            // Increment the sharkRenderTimer
+            sharkRenderTimer += 100 * dt;
         }
-
+        
             // move playerboard
             if (this->Keys[GLFW_KEY_LEFT])
             {
@@ -206,9 +209,8 @@ void Game::ProcessInput(float dt) {
 void Game::Update(float dt) {
     //update objects
     
-    if (this->Level == 2) {
+    if (this->Level == 1) {
         this->DoCollisions();
-        
     }
     else {
         //checks for collisions
@@ -221,12 +223,13 @@ void Game::Update(float dt) {
    // this->UpdatePowerUps(dt);
   
     //reduce shake time
-
     if (ShakeTime > 0.0f) {
         ShakeTime -= dt;
         if (ShakeTime <= 0.0f)
             Effects->Shake = false;
     }
+    
+
     //check loss condition
     if (shiro->Position.y >= this->Height) //did the ball reach bottom edge
     {
@@ -312,11 +315,17 @@ void Game::Render() {
             if (this->Level == 1) {
                 theTexture = ResourceManager::GetTexture("ocean");
                 Renderer->DrawSprite(theTexture, glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f);
-
-                swimShiro->Draw(*Renderer);
-                for (auto& shark : sharks)
-                {
+                for (auto& shark : sharks) {
                     shark.Draw(*Renderer);
+                }
+                swimShiro->Draw(*Renderer); 
+                if (sharkRenderTimer >= 3.0f) {
+                    // Reset the timer
+                    //printf("%f\n", sharkRenderTimer);
+                    sharkRenderTimer = 0.0f;
+                    
+                    // Render the sharks
+                    
                 }
             }
             else {
@@ -341,10 +350,13 @@ void Game::Render() {
         Effects->Render(glfwGetTime());
 
         if (this->State == GAME_WIN) {
-
             theTexture = ResourceManager::GetTexture("passed");
             Renderer->DrawSprite(theTexture, glm::vec2(this->Width/4.0f, this->Height/4.0f), glm::vec2(this->Width / 2.0f, this->Height / 2.0f), 0.0f);
         }
+    }
+    if (this->State == GAME_OVER) {
+        theTexture = ResourceManager::GetTexture("wasted");
+        Renderer->DrawSprite(theTexture, glm::vec2(this->Width / 4.0f, this->Height / 4.0f), glm::vec2(this->Width / 2.0f, this->Height / 2.0f), 0.0f);
     }
 }
 
@@ -498,6 +510,7 @@ bool IsOtherPowerUpActive(std::vector<PowerUp>& powerUps, std::string type)
 //collision detection
 bool CheckCollision(GameObject& one, GameObject& two);
 Collision CheckCollision(PlayerObject& one, GameObject& two);
+bool CheckSharkCollision(PlayerObject& player, shark& theShark);
 Direction VectorDirection(glm::vec2 closest);
 
 void Game::DoCollisions() {
@@ -555,6 +568,20 @@ void Game::DoCollisions() {
                     }
                 }
             }
+        }
+    }
+    for (shark& theShark : sharks) {
+        if (CheckSharkCollision(*swimShiro, theShark)) {
+            // Handle collision between swimShiro and theShark
+            //printf("%s", "yess collided");
+            --this->Lives;
+            if (this->Lives == 0) {
+                printf("%s", "lives ghatyo yayy");
+                this->ResetLevel();
+                this->ResetPlayer();
+                this->State = GAME_OVER;
+            }
+            this->ResetPlayer();
         }
     }
 
@@ -628,6 +655,22 @@ Collision CheckCollision(PlayerObject& one, GameObject& two) {//AABB - Circle co
     }
     else
         return std::make_tuple(false, UP, glm::vec2(0.0f, 0.0f));
+}
+bool CheckSharkCollision(PlayerObject& player, shark& theShark) {
+    // Get the center point of the player and the shark
+    glm::vec2 playerCenter = player.Position + glm::vec2(player.Radius);
+    glm::vec2 sharkCenter = theShark.Position + glm::vec2(theShark.Radius);
+
+    // Calculate the distance between centers
+    float distance = glm::length(playerCenter - sharkCenter);
+
+    // Compare distance with the sum of radii
+    if (distance < player.Radius + theShark.Radius) {
+        return true; // Collided
+    }
+    else {
+        return false; // Not collided
+    }
 }
 
 //calculate which direction a vector is facing (N,E,S or W)

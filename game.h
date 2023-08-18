@@ -14,7 +14,8 @@
 enum GameState {
 	GAME_ACTIVE,
 	GAME_MENU,
-	GAME_WIN
+	GAME_WIN,
+	GAME_OVER
 };
 
 //represents the four possible (collision) directions
@@ -44,7 +45,6 @@ const glm::vec2 INITIAL_BALL_VELOCITY(100.0f, -350.0f);
 const float sharkRadius = 20.0f;
 const glm::vec2 sharkVelocityleft(-160.0f, 0.0f);  // Move left
 const glm::vec2 sharkVelocityright(160.0f, 0.0f);   // Move right
-
 
 //easy access to each of the components and manafeability
 class Game {
