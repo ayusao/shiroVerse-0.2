@@ -23,6 +23,7 @@ float ShakeTime = 0.0f;
 float sharkRenderTimer = 0.0f;
 const float sharkRenderDelay = 3.0f; // Adjust this value to set the delay in seconds
 bool rendersharks = false;
+bool waitForEnter = false;
 //data related to the homepage, positions of the textures
 float x_postion = 520.0f;
 float y_postion = 200.0f;
@@ -180,26 +181,37 @@ void Game::ProcessInput(float dt) {
     }
     if (this->State == GAME_ACTIVE)
     {
-        float velocity = PLAYER_VELOCITY * dt;
-        if (this->Level == 1) {
-            for (auto& shark : sharks)
+        if (waitForEnter)
+        {
+            this->KeysProcessed[GLFW_KEY_ENTER] = false;
+            if (this->Keys[GLFW_KEY_ENTER] && !this->KeysProcessed[GLFW_KEY_ENTER])
             {
-                shark.Position += shark.Velocity * dt;
-                if (shark.Position.x + shark.Radius < 0.0f) {
-                    shark.Position.x = this->Width + shark.Radius; // Wrap to the right edge
-                }
-                if (shark.Position.x - shark.Radius > this->Width) {
-                    shark.Position.x = -shark.Radius; // Wrap to the left edge
-                }
-            }
-            // Increment the sharkRenderTimer
-            sharkRenderTimer += 1 * dt;
-            if (sharkRenderTimer >= 4.00f) {
-                rendersharks = true;
-                sharkRenderTimer = 0.00f;
+                waitForEnter = false;
+                this->KeysProcessed[GLFW_KEY_ENTER] = true;
             }
         }
-        
+        else
+        {
+            float velocity = PLAYER_VELOCITY * dt;
+            if (this->Level == 1) {
+                for (auto& shark : sharks)
+                {
+                    shark.Position += shark.Velocity * dt;
+                    if (shark.Position.x + shark.Radius < 0.0f) {
+                        shark.Position.x = this->Width + shark.Radius; // Wrap to the right edge
+                    }
+                    if (shark.Position.x - shark.Radius > this->Width) {
+                        shark.Position.x = -shark.Radius; // Wrap to the left edge
+                    }
+                }
+                // Increment the sharkRenderTimer
+                sharkRenderTimer += 1 * dt;
+                if (sharkRenderTimer >= 4.00f) {
+                    rendersharks = true;
+                    sharkRenderTimer = 0.00f;
+                }
+            }
+
             // move playerboard
             if (this->Keys[GLFW_KEY_LEFT])
             {
@@ -211,10 +223,8 @@ void Game::ProcessInput(float dt) {
                 shiro->Position.x += 1;
                 swimShiro->Position.x += 1;
             }
-
             if (this->Keys[GLFW_KEY_SPACE])
                 shiro->Stuck = false;
-
             if (this->Keys[GLFW_KEY_UP]) {
                 shiro->Position.y -= 1;
                 swimShiro->Position.y -= 1;
@@ -223,6 +233,7 @@ void Game::ProcessInput(float dt) {
                 shiro->Position.y += 1;
                 swimShiro->Position.y += 1;
             }
+        }
         }
     }
 void Game::Update(float dt) {
@@ -275,10 +286,18 @@ void Game::Update(float dt) {
             glfwTerminate();    // Terminate GLFW
             exit(0);          // Exit the program
         }
-        else //increase the level
+        else // increase the level
         {
+                // Increment the level and perform any necessary reset
             this->Level++;
             this->ResetPlayer();
+            waitForEnter = true; 
+            /*if (this->Keys[GLFW_KEY_ENTER] && !this->KeysProcessed[GLFW_KEY_ENTER])
+            {
+                waitForEnter = false;
+                this->KeysProcessed[GLFW_KEY_ENTER] = true;
+            }*/
+
         }
     }
 }
@@ -389,8 +408,8 @@ void Game::ResetLevel() {
         this->Levels[0].Load("levels/one.lvl", this->Width, this->Height * 0.8);
     else if (this->Level == 1)
         this->Levels[1].Load("levels/two.lvl", this->Width, this->Height * 0.8);
-    else if (this->Level == 2)
-        this->Levels[2].Load("levels/three.lvl", this->Width, this->Height * 0.8);
+    //else if (this->Level == 2)
+    //    this->Levels[2].Load("levels/three.lvl", this->Width, this->Height * 0.8);
     this->Lives = 3;
 }
 
