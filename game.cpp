@@ -8,6 +8,7 @@
 #include "particlegenerator.h"
 #include "postprocessor.h"
 #include <irr/irrKlang.h>
+#include <iostream>
 using namespace irrklang;
 
 //game related state data
@@ -62,6 +63,7 @@ void Game::Init() {
     // load textures
     ResourceManager::LoadTexture("textures/spacebg.jpg", false, "background");
     ResourceManager::LoadTexture("textures/ocean.png", true, "ocean");
+    ResourceManager::LoadTexture("textures/controls.png", true, "helpmenu");
     ResourceManager::LoadTexture("textures/spaceship.png", true, "face");
     ResourceManager::LoadTexture("textures/block.png", false, "block");
     ResourceManager::LoadTexture("textures/astroids.png", true, "block_solid");
@@ -100,7 +102,7 @@ void Game::Init() {
     // load levels
     GameLevel one; one.Load("levels/one.lvl", this->Width, this->Height*0.8);
     GameLevel two; two.Load("levels/two.lvl", this->Width, this->Height*0.8);
-    GameLevel three; /*three.Load("levels/three.lvl", this->Width, this->Height*0.8);*/
+    GameLevel three; three.Load("levels/three.lvl", this->Width, this->Height*0.8);
     GameLevel four; //might be required for exit button
     this->Levels.push_back(one);
     this->Levels.push_back(two);
@@ -132,7 +134,8 @@ void Game::ProcessInput(float dt) {
     if (this->State == GAME_MENU) {
         if (this->Keys[GLFW_KEY_ENTER] && !this->KeysProcessed[GLFW_KEY_ENTER])
         {
-            this->State = GAME_ACTIVE;
+            if( this->Level != 2)
+                this->State = GAME_ACTIVE;
             this->KeysProcessed[GLFW_KEY_ENTER] = true;
         }
         if (this->Keys[GLFW_KEY_W] && !this->KeysProcessed[GLFW_KEY_W])
@@ -152,20 +155,27 @@ void Game::ProcessInput(float dt) {
             this->Level = this->levelSelect;
             this->KeysProcessed[GLFW_KEY_S] = true;
         }
+
     }
-    if (this->State == GAME_WIN) {
+    if (this->State == GAME_WIN || this->State == GAME_OVER) {
         if (this->Keys[GLFW_KEY_ENTER]) {
             this->KeysProcessed[GLFW_KEY_ENTER] = true;
             Effects->Chaos = false;
             this->State = GAME_MENU;
         }
     }
-    if (this->State == GAME_OVER)
-    {
-        if (this->Keys[GLFW_KEY_ENTER]) {
-            this->KeysProcessed[GLFW_KEY_ENTER] = true;
-            Effects->Chaos = false;
-            this->State = GAME_MENU;
+    if (this->Level == 2) {
+        this->KeysProcessed[GLFW_KEY_ENTER] = false;
+        if (this->Keys[GLFW_KEY_ENTER] && !this->KeysProcessed[GLFW_KEY_ENTER]) {
+            if (this->State == GAME_MENU) {
+                std::cout << "Entering Help Menu!" << std::endl;
+                this->State = HELP_MENU;
+            }
+            else if (this->State == HELP_MENU) {
+                std::cout << "Exiting Help Menu!" << std::endl;
+                this->State = GAME_MENU;
+            }
+            this->KeysProcessed[GLFW_KEY_ENTER] = true; // Mark the Enter key as processed
         }
     }
     if (this->State == GAME_ACTIVE)
@@ -183,7 +193,11 @@ void Game::ProcessInput(float dt) {
                 }
             }
             // Increment the sharkRenderTimer
-            sharkRenderTimer += 100 * dt;
+            sharkRenderTimer += 1 * dt;
+            if (sharkRenderTimer >= 4.00f) {
+                rendersharks = true;
+                sharkRenderTimer = 0.00f;
+            }
         }
         
             // move playerboard
@@ -233,7 +247,6 @@ void Game::Update(float dt) {
         if (ShakeTime <= 0.0f)
             Effects->Shake = false;
     }
-    
 
     //check loss condition
     if (shiro->Position.y >= this->Height) //did the ball reach bottom edge
@@ -250,7 +263,7 @@ void Game::Update(float dt) {
     {
         // Check if this is the last level
     
-        if (this->Level == this->Levels.size() - 2)
+        if (this->Levels[1].IsCompleted())
         {
             // All levels are completed, show win page
             this->ResetLevel();
@@ -272,7 +285,7 @@ void Game::Update(float dt) {
 
 void Game::Render() {
     Texture2D theTexture;
-    if (this->State == GAME_ACTIVE|| this->State == GAME_MENU || this->State == GAME_WIN)
+    if (this->State == GAME_ACTIVE|| this->State == GAME_MENU || this->State == GAME_WIN || this->State == HELP_MENU)
     {
         Effects->BeginRender();
 
@@ -314,9 +327,15 @@ void Game::Render() {
                 Renderer->DrawSprite(theTexture, glm::vec2(x_postion, y_postion + gap * 3), glm::vec2(x_width, y_width), 0.0f);
             }
          }
+        else if (this->State == HELP_MENU)
+        {
+            //std::cout << "Help meanu aayoo";
+            theTexture = ResourceManager::GetTexture("helpmenu");
+            Renderer->DrawSprite(theTexture, glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f);
+        }
+
         else {
             // draw background
-
             if (this->Level == 1) {
                 theTexture = ResourceManager::GetTexture("ocean");
                 Renderer->DrawSprite(theTexture, glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f);
@@ -324,13 +343,13 @@ void Game::Render() {
                     shark.Draw(*Renderer);
                 }
                 swimShiro->Draw(*Renderer); 
-                if (sharkRenderTimer >= 3.0f) {
+                if (rendersharks) {
                     // Reset the timer
-                    //printf("%f\n", sharkRenderTimer);
-                    sharkRenderTimer = 0.0f;
-                    
+                    std::cout << sharkRenderTimer<<"\n";
                     // Render the sharks
-                    
+                    for (auto& shark : sharks) {
+                        shark.Draw(*Renderer);
+                    }
                 }
             }
             else {
@@ -661,6 +680,7 @@ Collision CheckCollision(PlayerObject& one, GameObject& two) {//AABB - Circle co
     else
         return std::make_tuple(false, UP, glm::vec2(0.0f, 0.0f));
 }
+
 bool CheckSharkCollision(PlayerObject& player, shark& theShark) {
     // Get the center point of the player and the shark
     glm::vec2 playerCenter = player.Position + glm::vec2(player.Radius);
