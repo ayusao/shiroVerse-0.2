@@ -68,8 +68,7 @@ void GameLevel::init(std::vector<std::vector<unsigned int>> tileData, unsigned i
 				else if (tileData[y][x] == 4)
 					color = glm::vec3(0.8f, 0.8f, 0.4f);
 				else if (tileData[y][x] == 5)
-					color = glm::vec3(1.0f, 0.5f, 0.0f);
-
+					color = glm::vec3(0.9647f, 0.7255f, 0.0f);
 				glm::vec2 pos(unit_width * x, unit_height * y);
 				glm::vec2 size(unit_width, unit_height);
 				this->Bricks.push_back(GameObject(pos, size, ResourceManager::GetTexture("block"), color));

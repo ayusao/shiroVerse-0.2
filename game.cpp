@@ -23,10 +23,11 @@ float sharkRenderTimer = 0.0f;
 const float sharkRenderDelay = 3.0f; // Adjust this value to set the delay in seconds
 bool rendersharks = false;
 //data related to the homepage, positions of the textures
-float x_postion = 350.0f;
-float y_postion = 130.0f;
-float x_width = 100.0f;
-float y_width = 60.0f;
+float x_postion = 520.0f;
+float y_postion = 200.0f;
+float x_width = 120.0f;
+float y_width = 80.0f;
+float gap = 120.0f;
 std::vector<shark> sharks; //vector to hold shark objects
 
 Game::Game(unsigned int width, unsigned int height) 
@@ -60,7 +61,7 @@ void Game::Init() {
 
     // load textures
     ResourceManager::LoadTexture("textures/spacebg.jpg", false, "background");
-    ResourceManager::LoadTexture("textures/ocean.jpg", false, "ocean");
+    ResourceManager::LoadTexture("textures/ocean.png", true, "ocean");
     ResourceManager::LoadTexture("textures/spaceship.png", true, "face");
     ResourceManager::LoadTexture("textures/block.png", false, "block");
     ResourceManager::LoadTexture("textures/astroids.png", true, "block_solid");
@@ -108,16 +109,20 @@ void Game::Init() {
     this->Level = 0;
 
     glm::vec2 shiroPos = glm::vec2(this->Width / 2.0f - BALL_RADIUS, this->Height-BALL_RADIUS*2.0f);
-    glm::vec2 sharkPos1(840.0f, 300.0f);
-    glm::vec2 sharkPos2(-20.0f, 200.0f);
-    glm::vec2 sharkPos3(790.0f, 130.0f);
-    glm::vec2 sharkPos4(00.0f, 400.0f);
+    glm::vec2 sharkPos1(1230.0f, 400.0f);
+    glm::vec2 sharkPos2(-20.0f, 300.0f);
+    glm::vec2 sharkPos3(1210.0f, 230.0f);
+    glm::vec2 sharkPos4(00.0f, 500.0f);
+    glm::vec2 sharkPos5(1200.0f, 600.0f);
+
     shiro = new PlayerObject(shiroPos, BALL_RADIUS, INITIAL_BALL_VELOCITY, ResourceManager::GetTexture("face"));
     swimShiro = new PlayerObject(shiroPos, BALL_RADIUS, INITIAL_BALL_VELOCITY, ResourceManager::GetTexture("swim"));
     sharks.emplace_back(sharkPos1, sharkRadius, sharkVelocityleft, sharkTextureright);
     sharks.emplace_back(sharkPos2, sharkRadius, sharkVelocityright, sharkTextureleft);
     sharks.emplace_back(sharkPos3, sharkRadius, sharkVelocityleft, sharkTextureright);
     sharks.emplace_back(sharkPos4, sharkRadius, sharkVelocityright, sharkTextureleft);
+    sharks.emplace_back(sharkPos5, sharkRadius, sharkVelocityleft, sharkTextureright);
+
 
     //audio
     SoundEngine->play2D("audio/breakout.mp3", true);
@@ -286,27 +291,27 @@ void Game::Render() {
 
             if (this->levelSelect == 1) {
                 theTexture = ResourceManager::GetTexture("lvl2b");
-                Renderer->DrawSprite(theTexture, glm::vec2(x_postion, y_postion + 100.0f), glm::vec2(x_width, y_width), 0.0f);
+                Renderer->DrawSprite(theTexture, glm::vec2(x_postion, y_postion + gap), glm::vec2(x_width, y_width), 0.0f);
             }
             else { theTexture = ResourceManager::GetTexture("lvl2p");
-                Renderer->DrawSprite(theTexture, glm::vec2(x_postion, y_postion + 100.0f), glm::vec2(x_width, y_width), 0.0f);
+                Renderer->DrawSprite(theTexture, glm::vec2(x_postion, y_postion + gap), glm::vec2(x_width, y_width), 0.0f);
             }
 
             if (this->levelSelect == 2) {
                 theTexture = ResourceManager::GetTexture("helpb");
-                Renderer->DrawSprite(theTexture, glm::vec2(x_postion, y_postion + 200.0f), glm::vec2(x_width, y_width), 0.0f);
+                Renderer->DrawSprite(theTexture, glm::vec2(x_postion, y_postion + gap*2), glm::vec2(x_width, y_width), 0.0f);
             }
             else {
                 theTexture = ResourceManager::GetTexture("helpp");
-                Renderer->DrawSprite(theTexture, glm::vec2(x_postion, y_postion + 200.0f), glm::vec2(x_width, y_width), 0.0f);
+                Renderer->DrawSprite(theTexture, glm::vec2(x_postion, y_postion + gap*2), glm::vec2(x_width, y_width), 0.0f);
             }
             if (this->levelSelect == 3) {
                 theTexture = ResourceManager::GetTexture("exitb");
-                Renderer->DrawSprite(theTexture, glm::vec2(x_postion, y_postion + 300.0f), glm::vec2(x_width, y_width), 0.0f);
+                Renderer->DrawSprite(theTexture, glm::vec2(x_postion, y_postion + gap * 3), glm::vec2(x_width, y_width), 0.0f);
             }
             else {
                 theTexture = ResourceManager::GetTexture("exitp");
-                Renderer->DrawSprite(theTexture, glm::vec2(x_postion, y_postion + 300.0f), glm::vec2(x_width, y_width), 0.0f);
+                Renderer->DrawSprite(theTexture, glm::vec2(x_postion, y_postion + gap * 3), glm::vec2(x_width, y_width), 0.0f);
             }
          }
         else {

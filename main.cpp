@@ -5,9 +5,8 @@
 
 #include "game.h"
 #include "resourceManager.h"
-const unsigned int windowx = 800;
-const unsigned int windowy = 600;
-
+const unsigned int windowx = 1200;
+const unsigned int windowy = 900;
 //GLFW function declarations
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
