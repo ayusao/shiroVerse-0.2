@@ -120,7 +120,7 @@ void Game::Init() {
     GameLevel three; three.Load("levels/three.lvl", this->Width, this->Height * 0.8);
     GameLevel four; //might be required for exit button
 
-    GameLevel five; five.Load("levels/zero.lvl", this->Width, this->Height * 0.8);
+    GameLevel five; five.Load("levels/breakout.lvl", this->Width, this->Height * 0.8);
     this->Levels.push_back(one);
     this->Levels.push_back(two);
     this->Levels.push_back(three);
@@ -482,7 +482,7 @@ void Game::ResetLevel() {
     else if (this->Level == 1)
         this->Levels[1].Load("levels/two.lvl", this->Width, this->Height * 0.8);
     else if (this->Level == 4)
-        this->Levels[4].Load("levels/zero.lvl", this->Width, this->Height * 0.8);
+        this->Levels[4].Load("levels/breakout.lvl", this->Width, this->Height * 0.8);
     this->Lives = 3;
 }
 
