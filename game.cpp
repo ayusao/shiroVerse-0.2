@@ -62,7 +62,7 @@ void Game::Init() {
     ResourceManager::GetShader("particle").SetMatrix4("projection", projection);
 
     // load textures
-    ResourceManager::LoadTexture("textures/spacebg.jpg", false, "background");
+    ResourceManager::LoadTexture("textures/background.png", true, "background");
     ResourceManager::LoadTexture("textures/ocean.png", true, "ocean");
     ResourceManager::LoadTexture("textures/controls.png", true, "helpmenu");
     ResourceManager::LoadTexture("textures/spaceship.png", true, "face");
@@ -169,11 +169,9 @@ void Game::ProcessInput(float dt) {
         this->KeysProcessed[GLFW_KEY_ENTER] = false;
         if (this->Keys[GLFW_KEY_ENTER] && !this->KeysProcessed[GLFW_KEY_ENTER]) {
             if (this->State == GAME_MENU) {
-                std::cout << "Entering Help Menu!" << std::endl;
                 this->State = HELP_MENU;
             }
             else if (this->State == HELP_MENU) {
-                std::cout << "Exiting Help Menu!" << std::endl;
                 this->State = GAME_MENU;
             }
             this->KeysProcessed[GLFW_KEY_ENTER] = true; // Mark the Enter key as processed
@@ -212,7 +210,7 @@ void Game::ProcessInput(float dt) {
                 }
             }
 
-            // move playerboard
+            //    playerboard
             if (this->Keys[GLFW_KEY_LEFT])
             {
                 shiro->Position.x -= 1;
