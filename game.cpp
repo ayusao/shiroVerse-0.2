@@ -25,9 +25,6 @@ ParticleGenerator* Particles;
 PostProcessor* Effects;
 ISoundEngine* SoundEngine = createIrrKlangDevice();
 float ShakeTime = 0.0f;
-float sharkRenderTimer = 0.0f;
-const float sharkRenderDelay = 3.0f; // Adjust this value to set the delay in seconds
-bool rendersharks = false;
 bool waitForEnter = false;
 //data related to the homepage, positions of the textures
 float x_postion = 520.0f;
@@ -71,7 +68,7 @@ void Game::Init() {
 
     // load textures
     ResourceManager::LoadTexture("textures/ball.png", true, "ball");
-    ResourceManager::LoadTexture("textures/spacebg.jpg", false, "background");
+    ResourceManager::LoadTexture("textures/background.png", true, "background");
     ResourceManager::LoadTexture("textures/ocean.png", true, "ocean");
     ResourceManager::LoadTexture("textures/controls.png", true, "helpmenu");
     ResourceManager::LoadTexture("textures/spaceship.png", true, "face");
@@ -181,16 +178,26 @@ void Game::ProcessInput(float dt) {
             //this->Level = this->levelSelect;
             this->KeysProcessed[GLFW_KEY_S] = true;
         }
-
     }
-    if (this->State == GAME_WIN || this->State == GAME_OVER) {
+    if (this->State == GAME_WIN ) {
         if (this->Keys[GLFW_KEY_ENTER]) {
             this->KeysProcessed[GLFW_KEY_ENTER] = true;
             Effects->Chaos = false;
             this->State = GAME_MENU;
         }
     }
-
+    if (this->State == GAME_OVER) {
+        SoundEngine->play2D("audio/breakout.mp3", false);
+        SoundEngine->play2D("audio/bleep.mp3", false);
+        SoundEngine->play2D("audio/wasted.mp3", true);
+        if (this->Keys[GLFW_KEY_ENTER]) {
+            this->KeysProcessed[GLFW_KEY_ENTER] = true;
+            SoundEngine->play2D("audio/breakout.mp3", true);
+            SoundEngine->play2D("audio/wasted.mp3", false);
+            SoundEngine->play2D("audio/bleep.mp3", false);
+            this->State = GAME_MENU;
+        }
+    }
     if (this->State == GAME_ACTIVE)
     {
         if (waitForEnter)
@@ -216,13 +223,7 @@ void Game::ProcessInput(float dt) {
                     if (shark.Position.x - shark.Radius > this->Width) {
                         shark.Position.x = -shark.Radius; // Wrap to the left edge
                     }
-                }
-                // Increment the sharkRenderTimer
-                sharkRenderTimer += 1 * dt;
-                if (sharkRenderTimer >= 4.00f) {
-                    rendersharks = true;
-                    sharkRenderTimer = 0.00f;
-                }
+                }  
             }
 
             // move playerboard
@@ -285,17 +286,11 @@ void Game::Update(float dt) {
         if (ShakeTime <= 0.0f)
             Effects->Shake = false;
     }
+    // Adjust positions for shiro
+    adjustPosition(shiro, this->Width, this->Height);
 
-    //check loss condition
-    if (shiro->Position.y >= this->Height) //did the ball reach bottom edge
-    {
-        --this->Lives;
-        if (this->Lives == 0) {
-            this->ResetLevel();
-            this->ResetPlayer();
-        }
-        this->ResetPlayer();
-    }
+    // Adjust positions for swimShiro
+    adjustPosition(swimShiro, this->Width, this->Height);
     //win check
     if (this->State == GAME_ACTIVE && this->Levels[this->Level].IsCompleted())
     {
@@ -317,15 +312,15 @@ void Game::Update(float dt) {
         }
         else // increase the level
         {
-                // Increment the level and perform any necessary reset
+            // Increment the level and perform any necessary reset
             this->Level++;
             this->ResetPlayer();
-            //waitForEnter = true; 
-            /*if (this->Keys[GLFW_KEY_ENTER] && !this->KeysProcessed[GLFW_KEY_ENTER])
+            waitForEnter = true; 
+            if (this->Keys[GLFW_KEY_ENTER] && !this->KeysProcessed[GLFW_KEY_ENTER])
             {
                 waitForEnter = false;
                 this->KeysProcessed[GLFW_KEY_ENTER] = true;
-            }*/
+            }
 
         }
     }
@@ -402,10 +397,7 @@ void HandleSharkCollisionAndRender(Game& game, PlayerObject& swimShiro, shark& t
                     glm::vec2 secondPosition = shark.Position + glm::vec2(300.0f, 0.0f); // Adjust as needed
 
                     // Handle collision and render for the original shark position
-                    //HandleSharkCollisionAndRender(*swimShiro, shark, shark.Position);
                     HandleSharkCollisionAndRender(*this, *swimShiro, shark, shark.Position);
-
-
                     // Handle collision and render for the second shark position
                     HandleSharkCollisionAndRender(*this, *swimShiro, shark, secondPosition);
                 }
