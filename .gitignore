@@ -62,3 +62,5 @@ build*
 *.sln
 *.vcxproj
 *.vcxproj.filters
+*.pdf
+/x64
