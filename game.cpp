@@ -5,6 +5,7 @@
 #include "resourceManager.h"
 #include "gameobject.h"
 #include "playerObject.h"
+#include "ballObject.h"
 #include "particlegenerator.h"
 #include "postprocessor.h"
 #include <irr/irrKlang.h>
@@ -15,6 +16,10 @@ using namespace irrklang;
 SpriteRenderer* Renderer;
 PlayerObject* shiro;  //the dog in spaceship
 PlayerObject* swimShiro;
+
+//for breakout
+GameObject* Paddle;
+BallObject* Ball;
 //PlayerObject* shark, *shark2;  //sharks in the ocean
 ParticleGenerator* Particles;
 PostProcessor* Effects;
@@ -43,6 +48,9 @@ Game::~Game() {
     delete Particles;
     delete Effects;
     delete swimShiro;
+    delete Ball;
+    delete Paddle;
+
     sharks.clear();
 
     SoundEngine->drop();
@@ -62,7 +70,8 @@ void Game::Init() {
     ResourceManager::GetShader("particle").SetMatrix4("projection", projection);
 
     // load textures
-    ResourceManager::LoadTexture("textures/background.png", true, "background");
+    ResourceManager::LoadTexture("textures/ball.png", true, "ball");
+    ResourceManager::LoadTexture("textures/spacebg.jpg", false, "background");
     ResourceManager::LoadTexture("textures/ocean.png", true, "ocean");
     ResourceManager::LoadTexture("textures/controls.png", true, "helpmenu");
     ResourceManager::LoadTexture("textures/spaceship.png", true, "face");
@@ -82,6 +91,14 @@ void Game::Init() {
     ResourceManager::LoadTexture("textures/exitblue.png", true, "exitb");
     ResourceManager::LoadTexture("textures/shark.png", true, "sharkright");
     ResourceManager::LoadTexture("textures/sharkleft.png", true, "sharkleft");
+
+    ResourceManager::LoadTexture("textures/paddle.png", true, "paddle");
+    ResourceManager::LoadTexture("textures/powerup_speed.png", true, "powerup_speed");
+    ResourceManager::LoadTexture("textures/powerup_sticky.png", true, "powerup_sticky");
+    ResourceManager::LoadTexture("textures/powerup_increase.png", true, "powerup_increase");
+    ResourceManager::LoadTexture("textures/powerup_confuse.png", true, "powerup_confuse");
+    ResourceManager::LoadTexture("textures/powerup_chaos.png", true, "powerup_chaos");
+    ResourceManager::LoadTexture("textures/powerup_passthrough.png", true, "powerup_passthrough");
     //setting shark controls
     Shader spriteShader = ResourceManager::GetShader("sprite");
     Renderer = new SpriteRenderer(spriteShader);
@@ -126,7 +143,11 @@ void Game::Init() {
     sharks.emplace_back(sharkPos4, sharkRadius, sharkVelocityright, sharkTextureleft);
     sharks.emplace_back(sharkPos5, sharkRadius, sharkVelocityleft, sharkTextureright);
 
+    glm::vec2 paddlePos = glm::vec2(this->Width / 2.0f - PLAYER_SIZE.x / 2.0f, this->Height - PLAYER_SIZE.y);
+    Paddle = new GameObject(paddlePos, PLAYER_SIZE, ResourceManager::GetTexture("paddle"));
 
+    glm::vec2 ballPos = paddlePos + glm::vec2(PLAYER_SIZE.x / 2.0f - BALL_RADIUS, -BALL_RADIUS * 2.0f);
+    Ball = new BallObject(ballPos, BALL_RADIUS, INITIAL_BALL_VELOCITY, ResourceManager::GetTexture("ball"));
     //audio
     SoundEngine->play2D("audio/breakout.mp3", true);
 }
@@ -135,9 +156,13 @@ void Game::ProcessInput(float dt) {
     if (this->State == GAME_MENU) {
         if (this->Keys[GLFW_KEY_ENTER] && !this->KeysProcessed[GLFW_KEY_ENTER])
         {
-            if( this->Level != 2)
+            this->Level = this->levelSelect;
+            if (this->Level != 2)
                 this->State = GAME_ACTIVE;
+            else
+                this->State = HELP_MENU;
             this->KeysProcessed[GLFW_KEY_ENTER] = true;
+            
         }
         if (this->Keys[GLFW_KEY_W] && !this->KeysProcessed[GLFW_KEY_W])
         {
@@ -146,14 +171,14 @@ void Game::ProcessInput(float dt) {
             else
                 this->levelSelect = 3;
 
-            this->Level = this->levelSelect;
+            //this->Level = this->levelSelect;
 
             this->KeysProcessed[GLFW_KEY_W] = true;
         }
         if (this->Keys[GLFW_KEY_S] && !this->KeysProcessed[GLFW_KEY_S])
         {
             this->levelSelect = (this->levelSelect + 1) % 4;
-            this->Level = this->levelSelect;
+            //this->Level = this->levelSelect;
             this->KeysProcessed[GLFW_KEY_S] = true;
         }
 
@@ -165,18 +190,7 @@ void Game::ProcessInput(float dt) {
             this->State = GAME_MENU;
         }
     }
-    if (this->Level == 2) {
-        this->KeysProcessed[GLFW_KEY_ENTER] = false;
-        if (this->Keys[GLFW_KEY_ENTER] && !this->KeysProcessed[GLFW_KEY_ENTER]) {
-            if (this->State == GAME_MENU) {
-                this->State = HELP_MENU;
-            }
-            else if (this->State == HELP_MENU) {
-                this->State = GAME_MENU;
-            }
-            this->KeysProcessed[GLFW_KEY_ENTER] = true; // Mark the Enter key as processed
-        }
-    }
+
     if (this->State == GAME_ACTIVE)
     {
         if (waitForEnter)
@@ -187,6 +201,7 @@ void Game::ProcessInput(float dt) {
                 waitForEnter = false;
                 this->KeysProcessed[GLFW_KEY_ENTER] = true;
             }
+
         }
         else
         {
@@ -209,7 +224,8 @@ void Game::ProcessInput(float dt) {
                     sharkRenderTimer = 0.00f;
                 }
             }
-            //    playerboard
+
+            // move playerboard
             if (this->Keys[GLFW_KEY_LEFT])
             {
                 shiro->Position.x -= 1;
@@ -248,7 +264,6 @@ void adjustPosition(PlayerObject* obj, float width, float height) {
         }
     }
 void Game::Update(float dt) {
-    
     //update objects
     
     if (this->Level == 1) {
@@ -270,11 +285,17 @@ void Game::Update(float dt) {
         if (ShakeTime <= 0.0f)
             Effects->Shake = false;
     }
-    // Adjust positions for shiro
-    adjustPosition(shiro, this->Width, this->Height);
 
-    // Adjust positions for swimShiro
-    adjustPosition(swimShiro, this->Width, this->Height);
+    //check loss condition
+    if (shiro->Position.y >= this->Height) //did the ball reach bottom edge
+    {
+        --this->Lives;
+        if (this->Lives == 0) {
+            this->ResetLevel();
+            this->ResetPlayer();
+        }
+        this->ResetPlayer();
+    }
     //win check
     if (this->State == GAME_ACTIVE && this->Levels[this->Level].IsCompleted())
     {
@@ -296,11 +317,28 @@ void Game::Update(float dt) {
         }
         else // increase the level
         {
-            // Increment the level and perform any necessary reset
+                // Increment the level and perform any necessary reset
             this->Level++;
             this->ResetPlayer();
-            waitForEnter = true; 
+            //waitForEnter = true; 
+            /*if (this->Keys[GLFW_KEY_ENTER] && !this->KeysProcessed[GLFW_KEY_ENTER])
+            {
+                waitForEnter = false;
+                this->KeysProcessed[GLFW_KEY_ENTER] = true;
+            }*/
+
         }
+    }
+    //help menu
+    if (this->State == HELP_MENU)
+    {
+        waitForEnter = true;
+        if (this->Keys[GLFW_KEY_ENTER] && !this->KeysProcessed[GLFW_KEY_ENTER])
+       {
+           waitForEnter = false;
+           this->KeysProcessed[GLFW_KEY_ENTER] = true;
+           this->State = GAME_MENU;
+       }
     }
 }
 bool CheckSharkCollision(PlayerObject& player, shark& theShark, glm::vec2& sharkPosition);
@@ -310,6 +348,7 @@ void HandleSharkCollisionAndRender(Game& game, PlayerObject& swimShiro, shark& t
     if (this->State == GAME_ACTIVE|| this->State == GAME_MENU || this->State == GAME_WIN || this->State == HELP_MENU)
     {
         Effects->BeginRender();
+
         if (this->State == GAME_MENU) {
             theTexture = ResourceManager::GetTexture("background");
             Renderer->DrawSprite(theTexture, glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f);
@@ -409,6 +448,8 @@ void Game::ResetLevel() {
         this->Levels[0].Load("levels/one.lvl", this->Width, this->Height * 0.8);
     else if (this->Level == 1)
         this->Levels[1].Load("levels/two.lvl", this->Width, this->Height * 0.8);
+    //else if (this->Level == 2)
+    //    this->Levels[2].Load("levels/three.lvl", this->Width, this->Height * 0.8);
     this->Lives = 3;
 }
 
@@ -735,3 +776,4 @@ Direction VectorDirection(glm::vec2 target) {
     }
     return (Direction)best_match;
 }
+
