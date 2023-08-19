@@ -29,8 +29,8 @@ bool waitForEnter = false;
 //data related to the homepage, positions of the textures
 float x_postion = 520.0f;
 float y_postion = 200.0f;
-float x_width = 120.0f;
-float y_width = 80.0f;
+float x_width = 140.0f;
+float y_width = 70.0f;
 float gap = 120.0f;
 std::vector<shark> sharks; //vector to hold shark objects
 
@@ -67,8 +67,8 @@ void Game::Init() {
     ResourceManager::GetShader("particle").SetMatrix4("projection", projection);
 
     // load textures
-    ResourceManager::LoadTexture("textures/ball.png", true, "ball");
-    ResourceManager::LoadTexture("textures/spacebg.jpg", false, "background");
+    ResourceManager::LoadTexture("textures/ball.png", true , "ball");
+    ResourceManager::LoadTexture("textures/background.png", true, "background");
     ResourceManager::LoadTexture("textures/ocean.png", true, "ocean");
     ResourceManager::LoadTexture("textures/controls.png", true, "helpmenu");
     ResourceManager::LoadTexture("textures/spaceship.png", true, "face");
