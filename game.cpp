@@ -34,13 +34,13 @@ float y_width = 80.0f;
 float gap = 120.0f;
 std::vector<shark> sharks; //vector to hold shark objects
 
-Game::Game(unsigned int width, unsigned int height) 
-	:State(GAME_MENU), Keys(), Width(width), Height(height),Lives(3) {
+Game::Game(unsigned int width, unsigned int height)
+    :State(GAME_MENU), Keys(), Width(width), Height(height), Lives(3) {
 
 }
 
 Game::~Game() {
-	delete Renderer;
+    delete Renderer;
     delete shiro;
     delete Particles;
     delete Effects;
@@ -68,7 +68,7 @@ void Game::Init() {
 
     // load textures
     ResourceManager::LoadTexture("textures/ball.png", true, "ball");
-    ResourceManager::LoadTexture("textures/background.png", true, "background");
+    ResourceManager::LoadTexture("textures/spacebg.jpg", false, "background");
     ResourceManager::LoadTexture("textures/ocean.png", true, "ocean");
     ResourceManager::LoadTexture("textures/controls.png", true, "helpmenu");
     ResourceManager::LoadTexture("textures/spaceship.png", true, "face");
@@ -104,7 +104,7 @@ void Game::Init() {
     Texture2D sharkTextureleft = ResourceManager::GetTexture("sharkleft");
 
 
-        // set render-specific controls
+    // set render-specific controls
     Shader theShader = ResourceManager::GetShader("sprite");
     Renderer = new SpriteRenderer(theShader);
 
@@ -115,9 +115,9 @@ void Game::Init() {
 
     Effects = new PostProcessor(ResourceManager::GetShader("postprocessing"), this->Width, this->Height);
     // load levels
-    GameLevel one; one.Load("levels/one.lvl", this->Width, this->Height*0.8);
-    GameLevel two; two.Load("levels/two.lvl", this->Width, this->Height*0.8);
-    GameLevel three; three.Load("levels/three.lvl", this->Width, this->Height*0.8);
+    GameLevel one; one.Load("levels/one.lvl", this->Width, this->Height * 0.8);
+    GameLevel two; two.Load("levels/two.lvl", this->Width, this->Height * 0.8);
+    GameLevel three; three.Load("levels/three.lvl", this->Width, this->Height * 0.8);
     GameLevel four; //might be required for exit button
 
     GameLevel five; five.Load("levels/zero.lvl", this->Width, this->Height * 0.8);
@@ -128,7 +128,7 @@ void Game::Init() {
     this->Levels.push_back(five);
     this->Level = 0;
 
-    glm::vec2 shiroPos = glm::vec2(this->Width / 2.0f - BALL_RADIUS, this->Height-BALL_RADIUS*2.0f);
+    glm::vec2 shiroPos = glm::vec2(this->Width / 2.0f - BALL_RADIUS, this->Height - BALL_RADIUS * 2.0f);
     glm::vec2 sharkPos1(1230.0f, 400.0f);
     glm::vec2 sharkPos2(-400.0f, 300.0f);
     glm::vec2 sharkPos3(1210.0f, 230.0f);
@@ -166,7 +166,7 @@ void Game::ProcessInput(float dt) {
             else
                 this->State = HELP_MENU;
             this->KeysProcessed[GLFW_KEY_ENTER] = true;
-            
+
         }
         if (this->Keys[GLFW_KEY_W] && !this->KeysProcessed[GLFW_KEY_W])
         {
@@ -185,25 +185,25 @@ void Game::ProcessInput(float dt) {
         }
     }
 
-    if (this->State == GAME_WIN ) {
+    if (this->State == GAME_WIN) {
         if (this->Keys[GLFW_KEY_ENTER]) {
             this->KeysProcessed[GLFW_KEY_ENTER] = true;
             Effects->Chaos = false;
             this->State = GAME_MENU;
         }
     }
-    if (this->State == GAME_OVER) {
-        SoundEngine->play2D("audio/breakout.mp3", false);
-        SoundEngine->play2D("audio/bleep.mp3", false);
-        SoundEngine->play2D("audio/wasted.mp3", true);
-        if (this->Keys[GLFW_KEY_ENTER]) {
-            this->KeysProcessed[GLFW_KEY_ENTER] = true;
-            SoundEngine->play2D("audio/breakout.mp3", true);
-            SoundEngine->play2D("audio/wasted.mp3", false);
-            SoundEngine->play2D("audio/bleep.mp3", false);
-            this->State = GAME_MENU;
-        }
-    }
+    //if (this->State == GAME_OVER) {
+    //    SoundEngine->play2D("audio/breakout.mp3", false);
+    //    SoundEngine->play2D("audio/bleep.mp3", false);
+    //    SoundEngine->play2D("audio/wasted.mp3", true);
+    //    if (this->Keys[GLFW_KEY_ENTER]) {
+    //        this->KeysProcessed[GLFW_KEY_ENTER] = true;
+    //        SoundEngine->play2D("audio/breakout.mp3", true);
+    //        SoundEngine->play2D("audio/wasted.mp3", false);
+    //        SoundEngine->play2D("audio/bleep.mp3", false);
+    //        this->State = GAME_MENU;
+    //    }
+    //}
     if (this->State == GAME_ACTIVE)
     {
         if (waitForEnter)
@@ -229,7 +229,7 @@ void Game::ProcessInput(float dt) {
                     if (shark.Position.x - shark.Radius > this->Width) {
                         shark.Position.x = -shark.Radius; // Wrap to the left edge
                     }
-                }  
+                }
             }
 
             // move playerboard
@@ -266,34 +266,34 @@ void Game::ProcessInput(float dt) {
                 swimShiro->Position.y += 1;
             }
         }
-        }
     }
+}
 void adjustPosition(PlayerObject* obj, float width, float height) {
-        if (obj->Position.y > height) {
-            obj->Position.y = height - obj->Radius;
-        }
-        if (obj->Position.y < 0) {
-            obj->Position.y = obj->Radius;
-        }
-        if (obj->Position.x < 0) {
-            obj->Position.x = obj->Radius;
-        }
-        if (obj->Position.x > width) {
-            obj->Position.x = width - obj->Radius;
-        }
+    if (obj->Position.y > height) {
+        obj->Position.y = height - obj->Radius;
     }
+    if (obj->Position.y < 0) {
+        obj->Position.y = obj->Radius;
+    }
+    if (obj->Position.x < 0) {
+        obj->Position.x = obj->Radius;
+    }
+    if (obj->Position.x > width) {
+        obj->Position.x = width - obj->Radius;
+    }
+}
 void Game::Update(float dt) {
     //update objects
-    
+
     if (this->Level == 1) {
         this->DoCollisions();
     }
-    else if(this->Level == 0){
+    else if (this->Level == 0) {
         this->DoCollisions();
         //update particles
         Particles->Update(dt, *shiro, 2, glm::vec2(shiro->Radius / 2.0f));
     }
-    else if(this->Level == 4){
+    else if (this->Level == 4) {
         //update ball object
         Ball->Move(dt, this->Width);
         //checks for collisions
@@ -303,7 +303,7 @@ void Game::Update(float dt) {
         //update power ups
         this->UpdatePowerUps(dt);
     }
-  
+
     //reduce shake time
     if (ShakeTime > 0.0f) {
         ShakeTime -= dt;
@@ -343,7 +343,7 @@ void Game::Update(float dt) {
             this->ResetPlayer();
             Effects->Chaos = true;
             this->State = GAME_WIN;
-            
+
         }
     }
     if (this->State == GAME_WIN || this->State == GAME_OVER) {
@@ -361,18 +361,18 @@ void Game::Update(float dt) {
     {
         waitForEnter = true;
         if (this->Keys[GLFW_KEY_ENTER] && !this->KeysProcessed[GLFW_KEY_ENTER])
-       {
-           waitForEnter = false;
-           this->KeysProcessed[GLFW_KEY_ENTER] = true;
-           this->State = GAME_MENU;
-       }
+        {
+            waitForEnter = false;
+            this->KeysProcessed[GLFW_KEY_ENTER] = true;
+            this->State = GAME_MENU;
+        }
     }
 }
 bool CheckSharkCollision(PlayerObject& player, shark& theShark, glm::vec2& sharkPosition);
 void HandleSharkCollisionAndRender(Game& game, PlayerObject& swimShiro, shark& theShark, glm::vec2& sharkPosition);
-    void Game::Render() {
+void Game::Render() {
     Texture2D theTexture;
-    if (this->State == GAME_ACTIVE|| this->State == GAME_MENU || this->State == GAME_WIN || this->State == HELP_MENU)
+    if (this->State == GAME_ACTIVE || this->State == GAME_MENU || this->State == GAME_WIN || this->State == HELP_MENU)
     {
         Effects->BeginRender();
 
@@ -393,17 +393,18 @@ void HandleSharkCollisionAndRender(Game& game, PlayerObject& swimShiro, shark& t
                 theTexture = ResourceManager::GetTexture("lvl2b");
                 Renderer->DrawSprite(theTexture, glm::vec2(x_postion, y_postion + gap), glm::vec2(x_width, y_width), 0.0f);
             }
-            else { theTexture = ResourceManager::GetTexture("lvl2p");
+            else {
+                theTexture = ResourceManager::GetTexture("lvl2p");
                 Renderer->DrawSprite(theTexture, glm::vec2(x_postion, y_postion + gap), glm::vec2(x_width, y_width), 0.0f);
             }
 
             if (this->levelSelect == 2) {
                 theTexture = ResourceManager::GetTexture("helpb");
-                Renderer->DrawSprite(theTexture, glm::vec2(x_postion, y_postion + gap*2), glm::vec2(x_width, y_width), 0.0f);
+                Renderer->DrawSprite(theTexture, glm::vec2(x_postion, y_postion + gap * 2), glm::vec2(x_width, y_width), 0.0f);
             }
             else {
                 theTexture = ResourceManager::GetTexture("helpp");
-                Renderer->DrawSprite(theTexture, glm::vec2(x_postion, y_postion + gap*2), glm::vec2(x_width, y_width), 0.0f);
+                Renderer->DrawSprite(theTexture, glm::vec2(x_postion, y_postion + gap * 2), glm::vec2(x_width, y_width), 0.0f);
             }
             if (this->levelSelect == 3) {
                 theTexture = ResourceManager::GetTexture("exitb");
@@ -413,7 +414,7 @@ void HandleSharkCollisionAndRender(Game& game, PlayerObject& swimShiro, shark& t
                 theTexture = ResourceManager::GetTexture("exitp");
                 Renderer->DrawSprite(theTexture, glm::vec2(x_postion, y_postion + gap * 3), glm::vec2(x_width, y_width), 0.0f);
             }
-         }
+        }
         else if (this->State == HELP_MENU)
         {
             //std::cout << "Help meanu aayoo";
@@ -466,7 +467,7 @@ void HandleSharkCollisionAndRender(Game& game, PlayerObject& swimShiro, shark& t
 
         if (this->State == GAME_WIN) {
             theTexture = ResourceManager::GetTexture("passed");
-            Renderer->DrawSprite(theTexture, glm::vec2(this->Width/4.0f, this->Height/4.0f), glm::vec2(this->Width / 2.0f, this->Height / 2.0f), 0.0f);
+            Renderer->DrawSprite(theTexture, glm::vec2(this->Width / 4.0f, this->Height / 4.0f), glm::vec2(this->Width / 2.0f, this->Height / 2.0f), 0.0f);
         }
     }
     if (this->State == GAME_OVER) {
@@ -492,9 +493,9 @@ void Game::ResetPlayer() {
     Ball->Reset(Paddle->Position + glm::vec2(PLAYER_SIZE.x / 2.0f - BALL_RADIUS, -(BALL_RADIUS * 2.0f)), INITIAL_BALL_VELOCITY);
     shiro->Reset(glm::vec2(this->Width / 2.0f - BALL_RADIUS, this->Height - BALL_RADIUS * 2), INITIAL_BALL_VELOCITY);
     swimShiro->Reset(glm::vec2(this->Width / 2.0f - BALL_RADIUS, this->Height - BALL_RADIUS * 2), INITIAL_BALL_VELOCITY);
-    
+
     // also disable all active powerups
-    Effects->Chaos = Effects->Confuse = Effects->Shake= false;
+    Effects->Chaos = Effects->Confuse = Effects->Shake = false;
     shiro->PassThrough = shiro->Sticky = false;
     Ball->PassThrough = Ball->Sticky = false;
 
@@ -601,7 +602,7 @@ void ActivatePowerUp(PowerUp& powerUp)
     }
     else if (powerUp.Type == "pad-size-increase")
     {
-       Paddle->Size.x += 50;
+        Paddle->Size.x += 50;
     }
     else if (powerUp.Type == "confuse")
     {
@@ -648,7 +649,7 @@ void Game::DoCollisions() {
                 else {
                     //if the ball hits the solid block then we enable the shake effect
                     ShakeTime = 0.0045f;
-                    Effects->Shake = true;
+                   // Effects->Shake = true;
                     //SoundEngine->play2D("audio/solid.wav", false);
                 }
                 //collision resolution
@@ -742,7 +743,7 @@ void Game::DoCollisions() {
             }
         }
     }
-    
+
     // also check collisions on PowerUps and if so, activate them
     for (PowerUp& powerUp : this->PowerUps)
     {
@@ -775,7 +776,7 @@ void Game::DoCollisions() {
         Ball->Velocity.x = INITIAL_BALL_VELOCITY.x * percentage * strength;
         Ball->Velocity = glm::normalize(Ball->Velocity) * glm::length(oldVelocity);// keep speed consistent over both axes (multiply by length of old velocity, so total strength is not changed)
         Ball->Velocity.y = -1.0f * abs(Ball->Velocity.y);
-       
+
         // if Sticky powerup is activated, also stick ball to paddle once new velocity vectors were calculated
         Ball->Stuck = Ball->Sticky;
         SoundEngine->play2D("audio/bleep.wav", false);
