@@ -188,13 +188,6 @@ void Game::ProcessInput(float dt) {
         }
 
     }
-    if (this->State == GAME_WIN || this->State == GAME_OVER) {
-        if (this->Keys[GLFW_KEY_ENTER]) {
-            this->KeysProcessed[GLFW_KEY_ENTER] = true;
-            Effects->Chaos = false;
-            this->State = GAME_MENU;
-        }
-    }
 
     if (this->State == GAME_ACTIVE)
     {
@@ -308,34 +301,33 @@ void Game::Update(float dt) {
     //win check
     if (this->State == GAME_ACTIVE && this->Levels[this->Level].IsCompleted())
     {
-        // Check if this is the last level
-    
-        if (this->Levels[1].IsCompleted()|| this->Levels[4].IsCompleted())
+        if (this->Level == 3) {
+            glfwTerminate();    // Terminate GLFW
+            exit(0);          // Exit the program
+        }
+        else if (this->Level == 0)
         {
-            // All levels are completed, show win page
+            this->ResetPlayer();
+            this->ResetLevel();
+            this->Level++;
+        }
+        else {
             this->ResetLevel();
             this->ResetPlayer();
             Effects->Chaos = true;
             this->State = GAME_WIN;
         }
-        else if (this->Level == 3) {
-            glfwTerminate();    // Terminate GLFW
-            exit(0);          // Exit the program
-        }
-        else if(this->Levels[0].IsCompleted())// increase the level
-        {
-                // Increment the level and perform any necessary reset
-            this->Level++;
-            this->ResetPlayer();
-            //waitForEnter = true; 
-            /*if (this->Keys[GLFW_KEY_ENTER] && !this->KeysProcessed[GLFW_KEY_ENTER])
-            {
-                waitForEnter = false;
-                this->KeysProcessed[GLFW_KEY_ENTER] = true;
-            }*/
-
+    }
+    if (this->State == GAME_WIN || this->State == GAME_OVER) {
+        waitForEnter = true;
+        if (this->Keys[GLFW_KEY_ENTER]) {
+            waitForEnter = false;
+            this->KeysProcessed[GLFW_KEY_ENTER] = true;
+            Effects->Chaos = false;
+            this->State = GAME_MENU;
         }
     }
+
     //help menu
     if (this->State == HELP_MENU)
     {
@@ -464,7 +456,7 @@ void Game::ResetLevel() {
     else if (this->Level == 1)
         this->Levels[1].Load("levels/two.lvl", this->Width, this->Height * 0.8);
     else if (this->Level == 4)
-        this->Levels[2].Load("levels/zero.lvl", this->Width, this->Height * 0.8);
+        this->Levels[4].Load("levels/zero.lvl", this->Width, this->Height * 0.8);
     this->Lives = 3;
 }
 
@@ -475,10 +467,12 @@ void Game::ResetPlayer() {
     Ball->Reset(Paddle->Position + glm::vec2(PLAYER_SIZE.x / 2.0f - BALL_RADIUS, -(BALL_RADIUS * 2.0f)), INITIAL_BALL_VELOCITY);
     shiro->Reset(glm::vec2(this->Width / 2.0f - BALL_RADIUS, this->Height - BALL_RADIUS * 2), INITIAL_BALL_VELOCITY);
     swimShiro->Reset(glm::vec2(this->Width / 2.0f - BALL_RADIUS, this->Height - BALL_RADIUS * 2), INITIAL_BALL_VELOCITY);
+    
     // also disable all active powerups
-    Effects->Chaos = Effects->Confuse = false;
+    Effects->Chaos = Effects->Confuse = Effects->Shake= false;
     shiro->PassThrough = shiro->Sticky = false;
     Ball->PassThrough = Ball->Sticky = false;
+
     Paddle->Color = glm::vec3(1.0f);
     Ball->Color = glm::vec3(1.0f);
     shiro->Color = glm::vec3(1.0f);
