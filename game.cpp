@@ -236,7 +236,22 @@ void Game::ProcessInput(float dt) {
         }
         }
     }
+    void adjustPosition(PlayerObject* obj, float width, float height) {
+        if (obj->Position.y > height) {
+            obj->Position.y = height - obj->Radius;
+        }
+        if (obj->Position.y < 0) {
+            obj->Position.y = obj->Radius;
+        }
+        if (obj->Position.x < 0) {
+            obj->Position.x = obj->Radius;
+        }
+        if (obj->Position.x > width) {
+            obj->Position.x = width - obj->Radius;
+        }
+    }
 void Game::Update(float dt) {
+    
     //update objects
     
     if (this->Level == 1) {
@@ -258,30 +273,11 @@ void Game::Update(float dt) {
         if (ShakeTime <= 0.0f)
             Effects->Shake = false;
     }
+    // Adjust positions for shiro
+    adjustPosition(shiro, this->Width, this->Height);
 
-    //check if it crosses the boundary
-    if (shiro->Position.y >= this->Height) //did the ball reach bottom edge
-    {
-        /*--this->Lives;
-        if (this->Lives == 0) {
-            this->ResetLevel();
-            this->ResetPlayer();
-        }
-        this->ResetPlayer();*/
-        shiro->Position.y = this->Height - shiro->Radius;
-    }
-    if (shiro->Position.y < 0) //did the ball reach top edge
-    {
-        shiro->Position.y = shiro->Radius;
-    }
-    if (shiro->Position.x < 0) //did the ball reach top edge
-    {
-        shiro->Position.x = shiro->Radius;
-    }
-    if (shiro->Position.x >= this->Width) //did the ball reach top edge
-    {
-        shiro->Position.x = this->Width - shiro->Radius;
-    }
+    // Adjust positions for swimShiro
+    adjustPosition(swimShiro, this->Width, this->Height);
     //win check
     if (this->State == GAME_ACTIVE && this->Levels[this->Level].IsCompleted())
     {
@@ -740,4 +736,3 @@ Direction VectorDirection(glm::vec2 target) {
     }
     return (Direction)best_match;
 }
-
