@@ -119,10 +119,13 @@ void Game::Init() {
     GameLevel two; two.Load("levels/two.lvl", this->Width, this->Height*0.8);
     GameLevel three; three.Load("levels/three.lvl", this->Width, this->Height*0.8);
     GameLevel four; //might be required for exit button
+
+    GameLevel five; five.Load("levels/zero.lvl", this->Width, this->Height * 0.8);
     this->Levels.push_back(one);
     this->Levels.push_back(two);
     this->Levels.push_back(three);
     this->Levels.push_back(four);
+    this->Levels.push_back(five);
     this->Level = 0;
 
     glm::vec2 shiroPos = glm::vec2(this->Width / 2.0f - BALL_RADIUS, this->Height-BALL_RADIUS*2.0f);
@@ -153,7 +156,11 @@ void Game::ProcessInput(float dt) {
     if (this->State == GAME_MENU) {
         if (this->Keys[GLFW_KEY_ENTER] && !this->KeysProcessed[GLFW_KEY_ENTER])
         {
-            this->Level = this->levelSelect;
+            if (this->levelSelect == 1)
+                this->Level = 4;
+            else
+                this->Level = this->levelSelect;
+
             if (this->Level != 2)
                 this->State = GAME_ACTIVE;
             else
@@ -168,14 +175,12 @@ void Game::ProcessInput(float dt) {
             else
                 this->levelSelect = 3;
 
-            //this->Level = this->levelSelect;
 
             this->KeysProcessed[GLFW_KEY_W] = true;
         }
         if (this->Keys[GLFW_KEY_S] && !this->KeysProcessed[GLFW_KEY_S])
         {
             this->levelSelect = (this->levelSelect + 1) % 4;
-            //this->Level = this->levelSelect;
             this->KeysProcessed[GLFW_KEY_S] = true;
         }
     }
@@ -229,16 +234,28 @@ void Game::ProcessInput(float dt) {
             // move playerboard
             if (this->Keys[GLFW_KEY_LEFT])
             {
+                if (Paddle->Position.x >= 0.0f) {
+                    Paddle->Position.x -= velocity;
+
+                    if (Ball->Stuck)
+                        Ball->Position.x -= velocity;
+                }
                 shiro->Position.x -= 1;
                 swimShiro->Position.x -= 1;
             }
             if (this->Keys[GLFW_KEY_RIGHT])
             {
+                if (Paddle->Position.x <= this->Width - Paddle->Size.x)
+                {
+                    Paddle->Position.x += velocity;
+                    if (Ball->Stuck)
+                        Ball->Position.x += velocity;
+                }
                 shiro->Position.x += 1;
                 swimShiro->Position.x += 1;
             }
             if (this->Keys[GLFW_KEY_SPACE])
-                shiro->Stuck = false;
+                Ball->Stuck = false;
             if (this->Keys[GLFW_KEY_UP]) {
                 shiro->Position.y -= 1;
                 swimShiro->Position.y -= 1;
@@ -270,15 +287,21 @@ void Game::Update(float dt) {
     if (this->Level == 1) {
         this->DoCollisions();
     }
-    else {
-        //checks for collisions
+    else if(this->Level == 0){
         this->DoCollisions();
         //update particles
         Particles->Update(dt, *shiro, 2, glm::vec2(shiro->Radius / 2.0f));
     }
-    
-    //update powerups
-   // this->UpdatePowerUps(dt);
+    else if(this->Level == 4){
+        //update ball object
+        Ball->Move(dt, this->Width);
+        //checks for collisions
+        this->DoCollisions();
+        //update particles
+        Particles->Update(dt, *Ball, 2, glm::vec2(Ball->Radius / 2.0f));
+        //update power ups
+        this->UpdatePowerUps(dt);
+    }
   
     //reduce shake time
     if (ShakeTime > 0.0f) {
@@ -288,15 +311,25 @@ void Game::Update(float dt) {
     }
     // Adjust positions for shiro
     adjustPosition(shiro, this->Width, this->Height);
-
     // Adjust positions for swimShiro
     adjustPosition(swimShiro, this->Width, this->Height);
+
+    //check loss condition
+    if (Ball->Position.y >= this->Height) //did the ball reach bottom edge
+    {
+        --this->Lives;
+        if (this->Lives == 0) {
+            this->ResetLevel();
+            this->ResetPlayer();
+        }
+        this->ResetPlayer();
+    }
     //win check
     if (this->State == GAME_ACTIVE && this->Levels[this->Level].IsCompleted())
     {
         // Check if this is the last level
     
-        if (this->Levels[1].IsCompleted())
+        if (this->Levels[1].IsCompleted()|| this->Levels[4].IsCompleted())
         {
             // All levels are completed, show win page
             //this->Level = 0;
@@ -310,7 +343,7 @@ void Game::Update(float dt) {
             glfwTerminate();    // Terminate GLFW
             exit(0);          // Exit the program
         }
-        else // increase the level
+        else if(this->Levels[0].IsCompleted())// increase the level
         {
             // Increment the level and perform any necessary reset
             this->Level++;
@@ -403,6 +436,19 @@ void HandleSharkCollisionAndRender(Game& game, PlayerObject& swimShiro, shark& t
                 }
                 swimShiro->Draw(*Renderer);
             }
+            else if (this->Level == 4) {
+                theTexture = ResourceManager::GetTexture("background");
+                Renderer->DrawSprite(theTexture, glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f);
+                Paddle->Draw(*Renderer);
+                // draw powerups
+                for (PowerUp& powerUp : this->PowerUps)
+                    if (!powerUp.Destroyed)
+                        powerUp.Draw(*Renderer);
+                //draw particles
+                Particles->Draw();
+                //draw ball
+                Ball->Draw(*Renderer);
+            }
             else {
                 theTexture = ResourceManager::GetTexture("background");
                 Renderer->DrawSprite(theTexture, glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f);
@@ -414,11 +460,6 @@ void HandleSharkCollisionAndRender(Game& game, PlayerObject& swimShiro, shark& t
             // draw level
             this->Levels[this->Level].Draw(*Renderer);
         }
-        // draw powerups
-        //for (PowerUp& powerUp : this->PowerUps)
-        //    if (!powerUp.Destroyed)
-        //        powerUp.Draw(*Renderer);
-
         //end rendering to postprocessig framebuffer
         Effects->EndRender();
         //render postprocessing quad
@@ -440,20 +481,24 @@ void Game::ResetLevel() {
         this->Levels[0].Load("levels/one.lvl", this->Width, this->Height * 0.8);
     else if (this->Level == 1)
         this->Levels[1].Load("levels/two.lvl", this->Width, this->Height * 0.8);
-    //else if (this->Level == 2)
-    //    this->Levels[2].Load("levels/three.lvl", this->Width, this->Height * 0.8);
+    else if (this->Level == 4)
+        this->Levels[2].Load("levels/zero.lvl", this->Width, this->Height * 0.8);
     this->Lives = 3;
 }
 
 void Game::ResetPlayer() {
     //reset player/ball states
-
+    Paddle->Size = PLAYER_SIZE;
+    Paddle->Position = glm::vec2(this->Width / 2.0f - PLAYER_SIZE.x / 2.0f, this->Height - PLAYER_SIZE.y);
+    Ball->Reset(Paddle->Position + glm::vec2(PLAYER_SIZE.x / 2.0f - BALL_RADIUS, -(BALL_RADIUS * 2.0f)), INITIAL_BALL_VELOCITY);
     shiro->Reset(glm::vec2(this->Width / 2.0f - BALL_RADIUS, this->Height - BALL_RADIUS * 2), INITIAL_BALL_VELOCITY);
     swimShiro->Reset(glm::vec2(this->Width / 2.0f - BALL_RADIUS, this->Height - BALL_RADIUS * 2), INITIAL_BALL_VELOCITY);
     // also disable all active powerups
     Effects->Chaos = Effects->Confuse = false;
     shiro->PassThrough = shiro->Sticky = false;
-    //Player->Color = glm::vec3(1.0f);
+    Ball->PassThrough = Ball->Sticky = false;
+    Paddle->Color = glm::vec3(1.0f);
+    Ball->Color = glm::vec3(1.0f);
     shiro->Color = glm::vec3(1.0f);
     swimShiro->Color = glm::vec3(1.0f);
 }
@@ -479,16 +524,16 @@ void Game::UpdatePowerUps(float dt)
                 {
                     if (!IsOtherPowerUpActive(this->PowerUps, "sticky"))
                     {	// only reset if no other PowerUp of type sticky is active
-                        shiro->Sticky = false;
-                        //Player->Color = glm::vec3(1.0f);
+                        Ball->Sticky = false;
+                        Paddle->Color = glm::vec3(1.0f);
                     }
                 }
                 else if (powerUp.Type == "pass-through")
                 {
                     if (!IsOtherPowerUpActive(this->PowerUps, "pass-through"))
                     {	// only reset if no other PowerUp of type pass-through is active
-                        shiro->PassThrough = false;
-                        shiro->Color = glm::vec3(1.0f);
+                        Ball->PassThrough = false;
+                        Ball->Color = glm::vec3(1.0f);
                     }
                 }
                 else if (powerUp.Type == "confuse")
@@ -520,6 +565,7 @@ bool ShouldSpawn(unsigned int chance)
     unsigned int random = rand() % chance;
     return random == 0;
 }
+
 void Game::SpawnPowerUps(GameObject& block)
 {
     if (ShouldSpawn(75)) // 1 in 75 chance
@@ -540,21 +586,21 @@ void ActivatePowerUp(PowerUp& powerUp)
 {
     if (powerUp.Type == "speed")
     {
-        shiro->Velocity *= 1.2;
+        Ball->Velocity *= 1.2;
     }
     else if (powerUp.Type == "sticky")
     {
-        shiro->Sticky = true;
-        //Player->Color = glm::vec3(1.0f, 0.5f, 1.0f);
+        Ball->Sticky = true;
+        Paddle->Color = glm::vec3(1.0f, 0.5f, 1.0f);
     }
     else if (powerUp.Type == "pass-through")
     {
-        shiro->PassThrough = true;
-        shiro->Color = glm::vec3(1.0f, 0.5f, 0.5f);
+        Ball->PassThrough = true;
+        Ball->Color = glm::vec3(1.0f, 0.5f, 0.5f);
     }
     else if (powerUp.Type == "pad-size-increase")
     {
-       // Player->Size.x += 50;
+       Paddle->Size.x += 50;
     }
     else if (powerUp.Type == "confuse")
     {
@@ -584,6 +630,9 @@ bool IsOtherPowerUpActive(std::vector<PowerUp>& powerUps, std::string type)
 //collision detection
 bool CheckCollision(GameObject& one, GameObject& two);
 Collision CheckCollision(PlayerObject& one, GameObject& two);
+Collision CheckCollision(BallObject& one, GameObject& two);
+bool CheckSharkCollision(PlayerObject& player, shark& theShark);
+bool CheckSharkCollision(PlayerObject& player, shark& theShark);
 Direction VectorDirection(glm::vec2 closest);
 bool CheckSharkCollision(PlayerObject& player, shark& theShark, glm::vec2& sharkPosition); 
 void Game::DoCollisions() {
@@ -599,7 +648,7 @@ void Game::DoCollisions() {
                 }
                 else {
                     //if the ball hits the solid block then we enable the shake effect
-                   ShakeTime = 0.001f;
+                    ShakeTime = 0.0045f;
                     Effects->Shake = true;
                     //SoundEngine->play2D("audio/solid.wav", false);
                 }
@@ -640,6 +689,76 @@ void Game::DoCollisions() {
                 }
             }
         }
+    }
+
+    for (GameObject& box : this->Levels[this->Level].Bricks) {
+        if (!box.Destroyed) {
+            Collision collision = CheckCollision(*Ball, box);
+            if (std::get<0>(collision)) {//if collision is true
+                //destroyed block if not solid
+                if (!box.IsSolid) {
+                    box.Destroyed = true;
+                    this->SpawnPowerUps(box);
+                    SoundEngine->play2D("audio/bleep.mp3", false);
+                }
+                else {
+                    //if the ball hits the solid block then we enable the shake effect
+                    ShakeTime = 0.001f;
+                    Effects->Shake = true;
+                    SoundEngine->play2D("audio/solid.wav", false);
+                }
+
+                //collision resolution
+                Direction dir = std::get<1>(collision);
+                glm::vec2 diff_vector = std::get<2>(collision);
+                if (!(shiro->PassThrough && !box.IsSolid)) {
+                    if (dir == LEFT || dir == RIGHT) {//horizontal collision //reverse horizontal velocity
+                        Ball->Velocity.x = -Ball->Velocity.x;
+
+                        //relocate
+                        float penetration = shiro->Radius - std::abs(diff_vector.x);
+                        if (dir == LEFT) {//move ball to right
+                            Ball->Position.x += penetration;
+                        }
+                        else {
+                            //move ball to left
+                            Ball->Position.x -= penetration;
+                        }
+                    }
+                    else //vertical collision
+                    {
+                        //reverse vertical velocity
+                        Ball->Velocity.y = -Ball->Velocity.y;
+
+                        //relocate
+                        float penetration = shiro->Radius - std::abs(diff_vector.y);
+                        if (dir == UP) {//move shiro back up
+                            swimShiro->Position.y -= penetration;
+                        }
+                        else {
+                            Ball->Position.y += penetration;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+    for (shark& theShark : sharks) {
+        if (CheckSharkCollision(*swimShiro, theShark)) {
+            // Handle collision between swimShiro and theShark
+            //printf("%s", "yess collided");
+            --this->Lives;
+            if (this->Lives == 0) {
+                printf("%s", "lives ghatyo yayy");
+                this->ResetLevel();
+                this->ResetPlayer();
+                this->State = GAME_OVER;
+            }
+            this->ResetPlayer();
+        }
+    }
 
     }
     // also check collisions on PowerUps and if so, activate them
@@ -651,33 +770,34 @@ void Game::DoCollisions() {
             if (powerUp.Position.y >= this->Height)
                 powerUp.Destroyed = true;
 
-            //if (CheckCollision(*Player, powerUp))
-            //{	// collided with player, now activate powerup
-            //    ActivatePowerUp(powerUp);
-            //    powerUp.Destroyed = true;
-            //    powerUp.Activated = true;
-            //    SoundEngine->play2D("audio/powerup.wav", false);
-            //}
+            if (CheckCollision(*Paddle, powerUp))
+            {	// collided with player, now activate powerup
+                ActivatePowerUp(powerUp);
+                powerUp.Destroyed = true;
+                powerUp.Activated = true;
+                SoundEngine->play2D("audio/powerup.wav", false);
+            }
         }
     }
     //check collitions for player pad (unless stuck)
-    //Collision result = CheckCollision(*Ball, *Player);
-    //if (!Ball->Stuck && std::get<0>(result)) {
-    //    //check where it hit the board, and change velocity based on where it hit the board
-    //    float centerBoard = Player->Position.x + Player->Size.x / 2.0f;
-    //    float distance = (Ball->Position.x + Ball->Radius) - centerBoard;
-    //    float percentage = distance / (Player->Size.x / 2.0f);
-    //    //then move accordingly
-    //    float strength = 2.0f;
-    //    glm::vec2 oldVelocity = Ball->Velocity;
-    //    Ball->Velocity.x = INITIAL_BALL_VELOCITY.x * percentage * strength;
-    //    Ball->Velocity = glm::normalize(Ball->Velocity) * glm::length(oldVelocity);// keep speed consistent over both axes (multiply by length of old velocity, so total strength is not changed)
-    //    Ball->Velocity.y = -1.0f * abs(Ball->Velocity.y);
-    //   
-    //    // if Sticky powerup is activated, also stick ball to paddle once new velocity vectors were calculated
-    //    Ball->Stuck = Ball->Sticky;
-    //    SoundEngine->play2D("audio/bleep.wav", false);
-    //}
+    Collision result = CheckCollision(*Ball, *Paddle);
+    if (!Ball->Stuck && std::get<0>(result)) {
+        //check where it hit the board, and change velocity based on where it hit the board
+        float centerBoard = Paddle->Position.x + Paddle->Size.x / 2.0f;
+        float distance = (Ball->Position.x + Ball->Radius) - centerBoard;
+        float percentage = distance / (Paddle->Size.x / 2.0f);
+
+        //then move accordingly
+        float strength = 2.0f;
+        glm::vec2 oldVelocity = Ball->Velocity;
+        Ball->Velocity.x = INITIAL_BALL_VELOCITY.x * percentage * strength;
+        Ball->Velocity = glm::normalize(Ball->Velocity) * glm::length(oldVelocity);// keep speed consistent over both axes (multiply by length of old velocity, so total strength is not changed)
+        Ball->Velocity.y = -1.0f * abs(Ball->Velocity.y);
+       
+        // if Sticky powerup is activated, also stick ball to paddle once new velocity vectors were calculated
+        Ball->Stuck = Ball->Sticky;
+        SoundEngine->play2D("audio/bleep.wav", false);
+    }
 }
 
 bool CheckCollision(GameObject& one, GameObject& two) { //AABB-AABB collision
@@ -712,7 +832,28 @@ Collision CheckCollision(PlayerObject& one, GameObject& two) {//AABB - Circle co
         return std::make_tuple(false, UP, glm::vec2(0.0f, 0.0f));
 }
 
-bool CheckSharkCollision(PlayerObject& player, shark& theShark, glm::vec2& sharkPosition) {
+Collision CheckCollision(BallObject& one, GameObject& two) {//AABB - Circle collision
+    //get center point circle first
+    glm::vec2 center(one.Position + one.Radius);
+    //calculate AABB info(center, half-extents)
+    glm::vec2 aabb_half_extents(two.Size.x / 2.0f, two.Size.y / 2.0f);
+    glm::vec2 aabb_center(two.Position.x + aabb_half_extents.x, two.Position.y + aabb_half_extents.y);
+    //get difference vector between both centers
+    glm::vec2 difference = center - aabb_center;
+    glm::vec2 clamped = glm::clamp(difference, -aabb_half_extents, aabb_half_extents);
+    //now that we know the clamped values, add this to AABB_center and we get the value of box closet to circle
+    glm::vec2 closest = aabb_center + clamped;
+    //now retrieve vector between center of the circle and closest point AABB and check if length<radius
+    difference = closest - center;
+
+    if (glm::length(difference) < one.Radius) {//no <= since in that case a collision also occurs when object one exactly touches object two, which they are at the end of each collision resolution stage
+        return std::make_tuple(true, VectorDirection(difference), difference);
+    }
+    else
+        return std::make_tuple(false, UP, glm::vec2(0.0f, 0.0f));
+}
+
+bool CheckSharkCollision(PlayerObject& player, shark& theShark) {
     // Get the center point of the player and the shark
     glm::vec2 playerCenter = player.Position + glm::vec2(player.Radius);
     glm::vec2 sharkCenter = sharkPosition + glm::vec2(theShark.Radius);
