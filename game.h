@@ -34,13 +34,13 @@ typedef std::tuple<bool, Direction, glm::vec2> Collision; //<collision?, what di
 const glm::vec2 PLAYER_SIZE(100.0f, 20.0f);
 
 //paddle initial velocity
-const float PLAYER_VELOCITY(500.0f);
+const float PLAYER_VELOCITY(200.0f);
 
 //radius of the ball object
 const float BALL_RADIUS = 18.0f;
 
 //initial ball velocity
-const glm::vec2 INITIAL_BALL_VELOCITY(100.0f, -350.0f);
+const glm::vec2 INITIAL_BALL_VELOCITY(100.0f, -250.0f);
 
 //shark
 const float sharkRadius = 26.0f;
