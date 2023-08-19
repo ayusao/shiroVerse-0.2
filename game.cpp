@@ -259,15 +259,28 @@ void Game::Update(float dt) {
             Effects->Shake = false;
     }
 
-    //check loss condition
+    //check if it crosses the boundary
     if (shiro->Position.y >= this->Height) //did the ball reach bottom edge
     {
-        --this->Lives;
+        /*--this->Lives;
         if (this->Lives == 0) {
             this->ResetLevel();
             this->ResetPlayer();
         }
-        this->ResetPlayer();
+        this->ResetPlayer();*/
+        shiro->Position.y = this->Height - shiro->Radius;
+    }
+    if (shiro->Position.y < 0) //did the ball reach top edge
+    {
+        shiro->Position.y = shiro->Radius;
+    }
+    if (shiro->Position.x < 0) //did the ball reach top edge
+    {
+        shiro->Position.x = shiro->Radius;
+    }
+    if (shiro->Position.x >= this->Width) //did the ball reach top edge
+    {
+        shiro->Position.x = this->Width - shiro->Radius;
     }
     //win check
     if (this->State == GAME_ACTIVE && this->Levels[this->Level].IsCompleted())
@@ -288,16 +301,10 @@ void Game::Update(float dt) {
         }
         else // increase the level
         {
-                // Increment the level and perform any necessary reset
+            // Increment the level and perform any necessary reset
             this->Level++;
             this->ResetPlayer();
             waitForEnter = true; 
-            /*if (this->Keys[GLFW_KEY_ENTER] && !this->KeysProcessed[GLFW_KEY_ENTER])
-            {
-                waitForEnter = false;
-                this->KeysProcessed[GLFW_KEY_ENTER] = true;
-            }*/
-
         }
     }
 }
@@ -307,7 +314,6 @@ void Game::Render() {
     if (this->State == GAME_ACTIVE|| this->State == GAME_MENU || this->State == GAME_WIN || this->State == HELP_MENU)
     {
         Effects->BeginRender();
-
         if (this->State == GAME_MENU) {
             theTexture = ResourceManager::GetTexture("background");
             Renderer->DrawSprite(theTexture, glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f);
@@ -408,8 +414,6 @@ void Game::ResetLevel() {
         this->Levels[0].Load("levels/one.lvl", this->Width, this->Height * 0.8);
     else if (this->Level == 1)
         this->Levels[1].Load("levels/two.lvl", this->Width, this->Height * 0.8);
-    //else if (this->Level == 2)
-    //    this->Levels[2].Load("levels/three.lvl", this->Width, this->Height * 0.8);
     this->Lives = 3;
 }
 
@@ -569,7 +573,7 @@ void Game::DoCollisions() {
                 }
                 else {
                     //if the ball hits the solid block then we enable the shake effect
-                   ShakeTime = 0.001f;
+                   ShakeTime = 0.0045f;
                     Effects->Shake = true;
                     SoundEngine->play2D("audio/solid.wav", false);
                 }
