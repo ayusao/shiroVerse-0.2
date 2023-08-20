@@ -860,6 +860,8 @@ void HandleSharkCollisionAndRender(Game& game, PlayerObject& swimShiro, shark& t
         }
         else {
             swimShiro.Position = glm::vec2(game.Width / 2.0f - swimShiro.Radius, game.Height - swimShiro.Radius * 2.0f);
+            game.ResetPlayer();
+
         }
     }
     //    // Render the shark at the given position
