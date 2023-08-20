@@ -34,6 +34,8 @@ float y_width = 70.0f;
 float gap = 120.0f;
 std::vector<shark> sharks; //vector to hold shark objects
 
+bool executeOnce = false;
+
 Game::Game(unsigned int width, unsigned int height)
     :State(GAME_MENU), Keys(), Width(width), Height(height), Lives(3) {
 
@@ -149,7 +151,7 @@ void Game::Init() {
     glm::vec2 ballPos = paddlePos + glm::vec2(PLAYER_SIZE.x / 2.0f - BALL_RADIUS, -BALL_RADIUS * 2.0f);
     Ball = new BallObject(ballPos, BALL_RADIUS, INITIAL_BALL_VELOCITY, ResourceManager::GetTexture("ball"));
     //audio
-    SoundEngine->play2D("audio/breakout.mp3", true);
+    SoundEngine->play2D("audio/breakout.mp3", true,false);
 }
 
 void Game::ProcessInput(float dt) {
@@ -186,9 +188,16 @@ void Game::ProcessInput(float dt) {
     }
 
     if (this->State == GAME_WIN || this->State == GAME_OVER) {
+        if (!executeOnce) {
+            if (this->State == GAME_OVER)
+                SoundEngine->play2D("audio/wasted.wav", false);
+
+            executeOnce = true;
+        }
         if (this->Keys[GLFW_KEY_ENTER]) {
             this->KeysProcessed[GLFW_KEY_ENTER] = true;
             Effects->Chaos = false;
+            Effects->Confuse = false;
             this->State = GAME_MENU;
         }
     }
@@ -308,6 +317,7 @@ void Game::Update(float dt) {
     {
         --this->Lives;
         if (this->Lives == 0) {
+            this->State = GAME_OVER;
             this->ResetLevel();
             this->ResetPlayer();
         }
@@ -327,20 +337,12 @@ void Game::Update(float dt) {
             this->Level++;
         }
         else {
+            SoundEngine->play2D("audio/missonPassed.mp3", false);
             this->ResetLevel();
             this->ResetPlayer();
             Effects->Chaos = true;
             this->State = GAME_WIN;
 
-        }
-    }
-    if (this->State == GAME_WIN || this->State == GAME_OVER) {
-        waitForEnter = true;
-        if (this->Keys[GLFW_KEY_ENTER]) {
-            waitForEnter = false;
-            this->KeysProcessed[GLFW_KEY_ENTER] = true;
-            Effects->Chaos = false;
-            this->State = GAME_MENU;
         }
     }
 
@@ -360,7 +362,7 @@ bool CheckSharkCollision(PlayerObject& player, shark& theShark, glm::vec2& shark
 void HandleSharkCollisionAndRender(Game& game, PlayerObject& swimShiro, shark& theShark, glm::vec2& sharkPosition);
 void Game::Render() {
     Texture2D theTexture;
-    if (this->State == GAME_ACTIVE || this->State == GAME_MENU || this->State == GAME_WIN || this->State == HELP_MENU)
+    if (this->State == GAME_ACTIVE || this->State == GAME_MENU || this->State == GAME_WIN || this->State == HELP_MENU|| this->State == GAME_OVER)
     {
         Effects->BeginRender();
 
@@ -457,10 +459,11 @@ void Game::Render() {
             theTexture = ResourceManager::GetTexture("passed");
             Renderer->DrawSprite(theTexture, glm::vec2(this->Width / 4.0f, this->Height / 4.0f), glm::vec2(this->Width / 2.0f, this->Height / 2.0f), 0.0f);
         }
-    }
-    if (this->State == GAME_OVER) {
-        theTexture = ResourceManager::GetTexture("wasted");
-        Renderer->DrawSprite(theTexture, glm::vec2(this->Width / 4.0f, this->Height / 4.0f), glm::vec2(this->Width / 2.0f, this->Height / 2.0f), 0.0f);     
+
+        if (this->State == GAME_OVER) {
+            theTexture = ResourceManager::GetTexture("wasted");
+            Renderer->DrawSprite(theTexture, glm::vec2(this->Width / 4.0f, this->Height / 4.0f), glm::vec2(this->Width / 2.0f, this->Height / 2.0f), 0.0f);
+        }
     }
 }
 
@@ -472,6 +475,7 @@ void Game::ResetLevel() {
     else if (this->Level == 4)
         this->Levels[4].Load("levels/breakout.lvl", this->Width, this->Height * 0.8);
     this->Lives = 3;
+    executeOnce = false;
 }
 
 void Game::ResetPlayer() {
@@ -770,6 +774,8 @@ void Game::DoCollisions() {
         SoundEngine->play2D("audio/bleep.wav", false);
     }
 }
+
+
 
 bool CheckCollision(GameObject& one, GameObject& two) { //AABB-AABB collision
     //collision x-axis?
