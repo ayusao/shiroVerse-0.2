@@ -185,25 +185,13 @@ void Game::ProcessInput(float dt) {
         }
     }
 
-    if (this->State == GAME_WIN) {
+    if (this->State == GAME_WIN || this->State == GAME_OVER) {
         if (this->Keys[GLFW_KEY_ENTER]) {
             this->KeysProcessed[GLFW_KEY_ENTER] = true;
             Effects->Chaos = false;
             this->State = GAME_MENU;
         }
     }
-    //if (this->State == GAME_OVER) {
-    //    SoundEngine->play2D("audio/breakout.mp3", false);
-    //    SoundEngine->play2D("audio/bleep.mp3", false);
-    //    SoundEngine->play2D("audio/wasted.mp3", true);
-    //    if (this->Keys[GLFW_KEY_ENTER]) {
-    //        this->KeysProcessed[GLFW_KEY_ENTER] = true;
-    //        SoundEngine->play2D("audio/breakout.mp3", true);
-    //        SoundEngine->play2D("audio/wasted.mp3", false);
-    //        SoundEngine->play2D("audio/bleep.mp3", false);
-    //        this->State = GAME_MENU;
-    //    }
-    //}
     if (this->State == GAME_ACTIVE)
     {
         if (waitForEnter)
@@ -472,7 +460,7 @@ void Game::Render() {
     }
     if (this->State == GAME_OVER) {
         theTexture = ResourceManager::GetTexture("wasted");
-        Renderer->DrawSprite(theTexture, glm::vec2(this->Width / 4.0f, this->Height / 4.0f), glm::vec2(this->Width / 2.0f, this->Height / 2.0f), 0.0f);
+        Renderer->DrawSprite(theTexture, glm::vec2(this->Width / 4.0f, this->Height / 4.0f), glm::vec2(this->Width / 2.0f, this->Height / 2.0f), 0.0f);     
     }
 }
 
