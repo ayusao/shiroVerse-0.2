@@ -91,6 +91,7 @@ void Game::Init() {
     ResourceManager::LoadTexture("textures/shark.png", true, "sharkright");
     ResourceManager::LoadTexture("textures/sharkleft.png", true, "sharkleft");
 
+    ResourceManager::LoadTexture("textures/block_solid.png", false, "breaksolid");
     ResourceManager::LoadTexture("textures/paddle.png", true, "paddle");
     ResourceManager::LoadTexture("textures/powerup_speed.png", true, "powerup_speed");
     ResourceManager::LoadTexture("textures/powerup_sticky.png", true, "powerup_sticky");
@@ -191,7 +192,7 @@ void Game::ProcessInput(float dt) {
         if (!executeOnce) {
             if (this->State == GAME_OVER)
                 SoundEngine->play2D("audio/wasted.wav", false);
-
+            Effects->Confuse = true;
             executeOnce = true;
         }
         if (this->Keys[GLFW_KEY_ENTER]) {
